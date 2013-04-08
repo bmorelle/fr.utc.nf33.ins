@@ -1,5 +1,6 @@
-package fr.utc.nf33;
+package fr.utc.nf33.ins;
 
+import fr.utc.nf33.R;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
