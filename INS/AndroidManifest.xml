@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="fr.utc.nf33.ins.DisplayMessageActivity"
+            android:label="@string/title_activity_display_message"
+            android:parentActivityName="fr.utc.nf33.ins.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="fr.utc.nf33.ins.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
