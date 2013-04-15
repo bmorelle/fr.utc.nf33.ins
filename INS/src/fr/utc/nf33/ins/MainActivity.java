@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.view.Menu;
 
 public class MainActivity extends Activity {
+	
+	String toto = "coucou";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
