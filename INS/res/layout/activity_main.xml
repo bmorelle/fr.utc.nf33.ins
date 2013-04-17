@@ -2,14 +2,24 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    >
+    
+    <FrameLayout
+        android:id="@+id/map_fragment_container"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="9"/>
+    "
 
-	<fragment
-        android:id="@+id/map"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.google.android.gms.maps.MapFragment"/>
+	<EditText
+    android:id="@+id/toto"
+    android:layout_width="fill_parent"
+    android:layout_height="0dp"
+    android:hint="toto"
+    android:layout_weight="1"
+    />
 
 </LinearLayout>
