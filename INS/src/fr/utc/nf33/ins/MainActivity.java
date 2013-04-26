@@ -1,15 +1,18 @@
 package fr.utc.nf33.ins;
 
+import android.app.AlertDialog;
 import android.content.Context;
-import android.location.GpsSatellite;
-import android.location.GpsStatus;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
+import android.content.Intent;
+import android.location.Criteria;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
@@ -20,6 +23,7 @@ public class MainActivity extends FragmentActivity {
 	private SupportMapFragment mapFragment;
 	private LocationManager locationManager;
 	private LocationProvider provider;
+	private Criteria criteria;
 
 	private static GoogleMapOptions GOOGLE_MAP_OPTIONS = (new GoogleMapOptions())
 			.compassEnabled(false).mapType(GoogleMap.MAP_TYPE_NORMAL)
@@ -31,25 +35,68 @@ public class MainActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		// Create a Google map fragment with desired options
 		mapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
 		FragmentTransaction fragmentTransaction = getSupportFragmentManager()
 				.beginTransaction();
 		fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
 		fragmentTransaction.commit();
 		
+		// Set up the location manager
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 		provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
-		locationManager.addGpsStatusListener(new GpsStatus.Listener() {
-			@Override
-			public void onGpsStatusChanged(int event) {
-				GpsStatus status = locationManager.getGpsStatus(null);
-				float avg = 0;
-				for (GpsSatellite sat : status.getSatellites())
-					avg += sat.getSnr();
-				avg /= status.getMaxSatellites();
-				((TextView) MainActivity.this.findViewById(R.id.toto)).setText(Float.toString(avg));
-			}
-		});
+		criteria = new Criteria();
+		criteria.setAccuracy(Criteria.ACCURACY_FINE);
+		criteria.setCostAllowed(false);
+		String providerName = locationManager.getBestProvider(criteria, true);
+		
+		if(providerName != null) {
+			// There is an available provider
+		}
+		
+//		locationManager.addGpsStatusListener(new GpsStatus.Listener() {
+//			@Override
+//			public void onGpsStatusChanged(int event) {
+//				GpsStatus status = locationManager.getGpsStatus(null);
+//				float avg = 0;
+//				for (GpsSatellite sat : status.getSatellites())
+//					avg += sat.getSnr();
+//				avg /= status.getMaxSatellites();
+//				((TextView) MainActivity.this.findViewById(R.id.toto)).setText(Float.toString(avg));
+//			}
+//		});
+	}
+	
+	@Override
+	protected void onStart() {
+	    super.onStart();
+
+	    // This verification should be done during onStart() because the system calls
+	    // this method when the user returns to the activity, which ensures the desired
+	    // location provider is enabled each time the activity resumes from the stopped state.
+	    locationManager =
+	            (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+	    final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+	    if (!gpsEnabled) {
+	    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+	    	builder.setMessage(R.string.gps_dialog_content)
+	        .setTitle(R.string.gps_dialog_title);
+	    	builder.setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
+	            @Override
+				public void onClick(DialogInterface dialog, int id) {
+	            	enableLocationSettings();
+	            }
+	        });
+	    	builder.setCancelable(false);
+	    	AlertDialog dialog = builder.create();
+	    	dialog.show();
+	    }
+	}
+
+	private void enableLocationSettings() {
+	    Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+	    startActivity(settingsIntent);
 	}
 
 	@Override
