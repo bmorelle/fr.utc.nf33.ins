@@ -71,9 +71,7 @@ public class MainActivity extends FragmentActivity {
 	protected void onStart() {
 	    super.onStart();
 
-	    // This verification should be done during onStart() because the system calls
-	    // this method when the user returns to the activity, which ensures the desired
-	    // location provider is enabled each time the activity resumes from the stopped state.
+	    // Check if GPS is enabled
 	    locationManager =
 	            (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 	    final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
@@ -94,6 +92,7 @@ public class MainActivity extends FragmentActivity {
 	    }
 	}
 
+	// Display Location settings
 	private void enableLocationSettings() {
 	    Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 	    startActivity(settingsIntent);
