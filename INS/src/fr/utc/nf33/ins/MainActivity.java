@@ -86,7 +86,12 @@ public class MainActivity extends FragmentActivity {
 	            	enableLocationSettings();
 	            }
 	        });
-	    	builder.setCancelable(false);
+	    	builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					finish();					
+				}
+			});
 	    	AlertDialog dialog = builder.create();
 	    	dialog.show();
 	    }
