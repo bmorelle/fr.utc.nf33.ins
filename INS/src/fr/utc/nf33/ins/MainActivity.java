@@ -3,9 +3,10 @@ package fr.utc.nf33.ins;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.location.Criteria;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
@@ -54,17 +56,17 @@ public class MainActivity extends FragmentActivity {
 			// There is an available provider
 		}
 		
-//		locationManager.addGpsStatusListener(new GpsStatus.Listener() {
-//			@Override
-//			public void onGpsStatusChanged(int event) {
-//				GpsStatus status = locationManager.getGpsStatus(null);
-//				float avg = 0;
-//				for (GpsSatellite sat : status.getSatellites())
-//					avg += sat.getSnr();
-//				avg /= status.getMaxSatellites();
-//				((TextView) MainActivity.this.findViewById(R.id.toto)).setText(Float.toString(avg));
-//			}
-//		});
+		locationManager.addGpsStatusListener(new GpsStatus.Listener() {
+			@Override
+			public void onGpsStatusChanged(int event) {
+				GpsStatus status = locationManager.getGpsStatus(null);
+				float avg = 0;
+				for (GpsSatellite sat : status.getSatellites())
+					avg += sat.getSnr();
+				avg /= status.getMaxSatellites();
+				((TextView) MainActivity.this.findViewById(R.id.toto)).setText(Float.toString(avg));
+			}
+		});
 	}
 	
 	@Override
