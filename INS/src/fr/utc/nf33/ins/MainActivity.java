@@ -7,8 +7,9 @@ import android.content.Intent;
 import android.location.Criteria;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
@@ -18,15 +19,49 @@ import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
+import com.google.android.gms.maps.LocationSource;
+import com.google.android.gms.maps.LocationSource.OnLocationChangedListener;
 import com.google.android.gms.maps.SupportMapFragment;
 
 public class MainActivity extends FragmentActivity {
 
 	private SupportMapFragment mapFragment;
 	private LocationManager locationManager;
-	private LocationProvider provider;
 	private Criteria criteria;
+	private String providerName;
+	private OnLocationChangedListener mapListener;
+	private final LocationListener listener = new LocationListener() {
 
+		
+		@Override
+		public void onLocationChanged(Location location) {
+			
+			String loc = location.getLatitude() + ", " +
+	                location.getLongitude();
+			//((TextView) MainActivity.this.findViewById(R.id.top)).setText(loc);
+			
+			if(mapListener != null) { mapListener.onLocationChanged(location); }
+	        }
+
+		@Override
+		public void onProviderDisabled(String provider) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onProviderEnabled(String provider) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onStatusChanged(String provider, int status, Bundle extras) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
+	
 	private static GoogleMapOptions GOOGLE_MAP_OPTIONS = (new GoogleMapOptions())
 			.compassEnabled(false).mapType(GoogleMap.MAP_TYPE_NORMAL)
 			.rotateGesturesEnabled(true).tiltGesturesEnabled(true)
@@ -46,25 +81,42 @@ public class MainActivity extends FragmentActivity {
 		
 		// Set up the location manager
 		locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-		provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
 		criteria = new Criteria();
 		criteria.setAccuracy(Criteria.ACCURACY_FINE);
 		criteria.setCostAllowed(false);
-		String providerName = locationManager.getBestProvider(criteria, true);
+		providerName = locationManager.getBestProvider(criteria, true);
 		
 		if(providerName != null) {
-			// There is an available provider
+			locationManager.requestLocationUpdates(providerName, 3000, 10, listener);
 		}
 		
 		locationManager.addGpsStatusListener(new GpsStatus.Listener() {
 			@Override
 			public void onGpsStatusChanged(int event) {
+				if(event == GpsStatus.GPS_EVENT_STOPPED) {
 				GpsStatus status = locationManager.getGpsStatus(null);
-				float avg = 0;
-				for (GpsSatellite sat : status.getSatellites())
-					avg += sat.getSnr();
-				avg /= status.getMaxSatellites();
-				((TextView) MainActivity.this.findViewById(R.id.toto)).setText(Float.toString(avg));
+				float[] snrs = new float[3];
+				int count = 0;
+				float snr = 0;
+				for (@SuppressWarnings("unused") GpsSatellite sat : status.getSatellites())
+				{
+					snr = sat.getSnr();
+					if(snr > snrs[0]) { snrs[0] = snr; }
+					else if(snr > snrs[1]) { snrs[1] = snr; }
+					else if(snr > snrs[2]) { snrs[2] = snr; }
+				}
+				float avg = (snrs[0]+snrs[1]+snrs[2]) / 3;
+				((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): " + Float.toString(avg));
+				
+				snr = 0;
+				for (@SuppressWarnings("unused") GpsSatellite sat : status.getSatellites())
+				{
+					snr += sat.getSnr();
+					++count;
+				}
+				snr /= count;
+				((TextView) MainActivity.this.findViewById(R.id.top)).setText("SNR (tous): " + Float.toString(snr));
+			}
 			}
 		});
 	}
@@ -97,6 +149,21 @@ public class MainActivity extends FragmentActivity {
 	    	AlertDialog dialog = builder.create();
 	    	dialog.show();
 	    }
+	    
+	    mapFragment.getMap().setLocationSource(new LocationSource(){
+
+			@Override
+			public void activate(OnLocationChangedListener listener) {
+				mapListener = listener;
+			}
+
+			@Override
+			public void deactivate() {
+				mapListener = null;
+			}
+	    	
+	    });
+	    mapFragment.getMap().setMyLocationEnabled(true);
 	}
 
 	// Display Location settings
@@ -110,5 +177,11 @@ public class MainActivity extends FragmentActivity {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
+	}
+	
+	@Override
+	protected void onStop() {
+	    super.onStop();
+	    locationManager.removeUpdates(listener);
 	}
 }
