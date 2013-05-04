@@ -145,6 +145,7 @@ public final class MainActivity extends FragmentActivity {
 
   //
   private final class GpsStatusListener implements GpsStatus.Listener {
+    
     @Override
     public void onGpsStatusChanged(int event) {
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
@@ -152,7 +153,6 @@ public final class MainActivity extends FragmentActivity {
 
         GpsStatus status = locationManager.getGpsStatus(null);
         float[] snrs = new float[3];
-        int count = 0;
         float snr = 0;
         for (GpsSatellite sat : status.getSatellites()) {
           snr = sat.getSnr();
@@ -165,15 +165,14 @@ public final class MainActivity extends FragmentActivity {
         float avg = (snrs[0] + snrs[1] + snrs[2]) / 3;
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
             + Float.toString(avg));
-
-        snr = 0;
-        for (GpsSatellite sat : status.getSatellites()) {
-          snr += sat.getSnr();
-          ++count;
+        if(avg < 30)
+        {
+          showNotification();
         }
-        snr /= count;
-        ((TextView) MainActivity.this.findViewById(R.id.top)).setText("SNR (tous): "
-            + Float.toString(snr));
+        else
+        {
+          dismissNotification();
+        }
       }
     }
   }
@@ -197,6 +196,16 @@ public final class MainActivity extends FragmentActivity {
   private LocationManager locationManager;
   //
   private SupportMapFragment mapFragment;
+  
+  private AlertDialog notification;
+  
+  public void showNotification() {
+    notification.show();
+  }
+  
+  public void dismissNotification() {
+    notification.dismiss();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -208,6 +217,12 @@ public final class MainActivity extends FragmentActivity {
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
+    
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle(R.string.snr_above_limit_title);
+    builder.setMessage(R.string.snr_above_limit_content);
+    builder.setCancelable(false);
+    notification = builder.create();
   }
 
   @Override

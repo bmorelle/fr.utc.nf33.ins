@@ -7,5 +7,7 @@
     <string name="gps_dialog_title">GPS settings</string>
     <string name="gps_dialog_ok">OK</string>
     <string name="gps_dialog_quit">Quit</string>
+    <string name="snr_above_limit_title">Changement de mode</string>
+    <string name="snr_above_limit_content">Passage en mode intérieur</string>
 
 </resources>

@@ -11,13 +11,6 @@
         android:layout_weight="8" />
 
     <TextView
-        android:id="@+id/top"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:textIsSelectable="false" />
-
-    <TextView
         android:id="@+id/bottom"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
