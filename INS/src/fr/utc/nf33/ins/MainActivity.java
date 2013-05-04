@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.location.Criteria;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -20,154 +19,195 @@ import android.widget.TextView;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.LocationSource;
-import com.google.android.gms.maps.LocationSource.OnLocationChangedListener;
 import com.google.android.gms.maps.SupportMapFragment;
 
-public class MainActivity extends FragmentActivity {
+/**
+ * 
+ * @author
+ * 
+ */
+public final class MainActivity extends FragmentActivity {
+  //
+  private final class BestLocationProvider implements LocationSource, LocationListener {
+    //
+    private static final float GPS_MIN_DISTANCE = 10;
+    //
+    private static final long GPS_MIN_TIME = 3000;
+    //
+    private static final float NETWORK_MIN_DISTANCE = 0;
+    //
+    private static final long TWO_MINUTES = 1000 * 60 * 2;
+    //
+    private static final long NETWORK_MIN_TIME = 30000;
 
-  private SupportMapFragment mapFragment;
-  private LocationManager locationManager;
-  private Criteria criteria;
-  private String providerName;
-  private OnLocationChangedListener mapListener;
-  private final LocationListener listener = new LocationListener() {
+    //
+    private Location currentBestLocation;
+
+    //
+    private OnLocationChangedListener listener;
+
+    @Override
+    public void activate(OnLocationChangedListener listener) {
+      this.listener = listener;
+
+      if (locationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
+            GPS_MIN_DISTANCE, this);
+
+      if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
+            NETWORK_MIN_DISTANCE, this);
+    }
+
+    @Override
+    public void deactivate() {
+      locationManager.removeUpdates(this);
+    }
+
+    /**
+     * Determines whether one Location reading is better than the current Location fix.
+     * 
+     * @param location the new Location that you want to evaluate.
+     * @return true when the new Location is better than the current one, false otherwise.
+     */
+    protected boolean isBetterLocation(Location location) {
+      // A new location is always better than no location.
+      if (currentBestLocation == null) return true;
+
+      // Check whether the new location fix is newer or older.
+      long timeDelta = currentBestLocation.getTime() - currentBestLocation.getTime();
+      boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+      boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+      boolean isNewer = timeDelta > 0;
+
+      // If it's been more than two minutes since the current location, use the new location
+      // because the user has likely moved.
+      if (isSignificantlyNewer)
+        return true;
+      // If the new location is more than two minutes older, it must be worse.
+      else if (isSignificantlyOlder) return false;
+
+      // Check whether the new location fix is more or less accurate.
+      int accuracyDelta =
+          (int) (currentBestLocation.getAccuracy() - currentBestLocation.getAccuracy());
+      boolean isLessAccurate = accuracyDelta > 0;
+      boolean isMoreAccurate = accuracyDelta < 0;
+      boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+      // Check if the old and new location are from the same provider.
+      boolean isFromSameProvider =
+          isSameProvider(currentBestLocation.getProvider(), currentBestLocation.getProvider());
+
+      // Determine location quality using a combination of timeliness and accuracy.
+      if (isMoreAccurate)
+        return true;
+      else if (isNewer && !isLessAccurate)
+        return true;
+      else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider)
+        return true;
+      else
+        return false;
+    }
+
+    // Checks whether two providers are the same.
+    private boolean isSameProvider(String provider1, String provider2) {
+      if (provider1 == null)
+        return provider2 == null;
+      else
+        return provider1.equals(provider2);
+    }
 
     @Override
     public void onLocationChanged(Location location) {
-      if (mapListener != null) {
-        mapListener.onLocationChanged(location);
-      }
+      if ((listener == null) || (!isBetterLocation(location))) return;
+
+      currentBestLocation = location;
+      listener.onLocationChanged(currentBestLocation);
+
+      // TODO
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-      // TODO Auto-generated method stub
 
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-      // TODO Auto-generated method stub
 
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-      // TODO Auto-generated method stub
 
     }
-  };
+  }
 
-  private static GoogleMapOptions GOOGLE_MAP_OPTIONS = (new GoogleMapOptions())
-      .compassEnabled(false).mapType(GoogleMap.MAP_TYPE_NORMAL).rotateGesturesEnabled(true)
-      .tiltGesturesEnabled(true).zoomControlsEnabled(false).zoomGesturesEnabled(true);
+  //
+  private final class GpsStatusListener implements GpsStatus.Listener {
+    @Override
+    public void onGpsStatusChanged(int event) {
+      if (event == GpsStatus.GPS_EVENT_STOPPED) {
+        // TODO
+
+        GpsStatus status = locationManager.getGpsStatus(null);
+        float[] snrs = new float[3];
+        int count = 0;
+        float snr = 0;
+        for (GpsSatellite sat : status.getSatellites()) {
+          snr = sat.getSnr();
+          if (snr > snrs[0])
+            snrs[0] = snr;
+          else if (snr > snrs[1])
+            snrs[1] = snr;
+          else if (snr > snrs[2]) snrs[2] = snr;
+        }
+        float avg = (snrs[0] + snrs[1] + snrs[2]) / 3;
+        ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
+            + Float.toString(avg));
+
+        snr = 0;
+        for (GpsSatellite sat : status.getSatellites()) {
+          snr += sat.getSnr();
+          ++count;
+        }
+        snr /= count;
+        ((TextView) MainActivity.this.findViewById(R.id.top)).setText("SNR (tous): "
+            + Float.toString(snr));
+      }
+    }
+  }
+
+  //
+  private static final GoogleMapOptions GOOGLE_MAP_OPTIONS = new GoogleMapOptions();
+  static {
+    GOOGLE_MAP_OPTIONS.compassEnabled(false);
+    GOOGLE_MAP_OPTIONS.mapType(GoogleMap.MAP_TYPE_NORMAL);
+    GOOGLE_MAP_OPTIONS.rotateGesturesEnabled(true);
+    GOOGLE_MAP_OPTIONS.tiltGesturesEnabled(true);
+    GOOGLE_MAP_OPTIONS.zoomControlsEnabled(false);
+    GOOGLE_MAP_OPTIONS.zoomGesturesEnabled(true);
+  }
+
+  //
+  private BestLocationProvider bestLocationProvider;
+  //
+  private GpsStatus.Listener gpsStatusListener;
+  //
+  private LocationManager locationManager;
+  //
+  private SupportMapFragment mapFragment;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    // Create a Google map fragment with desired options
+    // Create a Google Map Fragment with desired options.
     mapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
-
-    // Set up the location manager
-    locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-    criteria = new Criteria();
-    criteria.setAccuracy(Criteria.ACCURACY_FINE);
-    criteria.setCostAllowed(false);
-    providerName = locationManager.getBestProvider(criteria, true);
-
-    if (providerName != null) {
-      locationManager.requestLocationUpdates(providerName, 3000, 10, listener);
-    }
-
-    locationManager.addGpsStatusListener(new GpsStatus.Listener() {
-      @Override
-      public void onGpsStatusChanged(int event) {
-        if (event == GpsStatus.GPS_EVENT_STOPPED) {
-          GpsStatus status = locationManager.getGpsStatus(null);
-          float[] snrs = new float[3];
-          int count = 0;
-          float snr = 0;
-          for (@SuppressWarnings("unused")
-          GpsSatellite sat : status.getSatellites()) {
-            snr = sat.getSnr();
-            if (snr > snrs[0]) {
-              snrs[0] = snr;
-            } else if (snr > snrs[1]) {
-              snrs[1] = snr;
-            } else if (snr > snrs[2]) {
-              snrs[2] = snr;
-            }
-          }
-          float avg = (snrs[0] + snrs[1] + snrs[2]) / 3;
-          ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-              + Float.toString(avg));
-
-          snr = 0;
-          for (@SuppressWarnings("unused")
-          GpsSatellite sat : status.getSatellites()) {
-            snr += sat.getSnr();
-            ++count;
-          }
-          snr /= count;
-          ((TextView) MainActivity.this.findViewById(R.id.top)).setText("SNR (tous): "
-              + Float.toString(snr));
-        }
-      }
-    });
-  }
-
-  @Override
-  protected void onStart() {
-    super.onStart();
-
-    // Check if GPS is enabled
-    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    final boolean gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-    if (!gpsEnabled) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setMessage(R.string.gps_dialog_content).setTitle(R.string.gps_dialog_title);
-      builder.setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int id) {
-          enableLocationSettings();
-        }
-      });
-      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          finish();
-        }
-      });
-      AlertDialog dialog = builder.create();
-      dialog.show();
-    }
-
-    mapFragment.getMap().setLocationSource(new LocationSource() {
-
-      @Override
-      public void activate(OnLocationChangedListener listener) {
-        mapListener = listener;
-      }
-
-      @Override
-      public void deactivate() {
-        mapListener = null;
-      }
-
-    });
-    mapFragment.getMap().setMyLocationEnabled(true);
-  }
-
-  // Display Location settings
-  private void enableLocationSettings() {
-    Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-    startActivity(settingsIntent);
   }
 
   @Override
@@ -178,8 +218,48 @@ public class MainActivity extends FragmentActivity {
   }
 
   @Override
+  protected void onStart() {
+    super.onStart();
+
+    // Get the Location Manager.
+    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+    // Check whether the GPS provider is enabled.
+    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setTitle(R.string.gps_dialog_title);
+      builder.setMessage(R.string.gps_dialog_content);
+      builder.setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+          startActivity(settingsIntent);
+        }
+      });
+      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+        @Override
+        public void onCancel(DialogInterface dialog) {
+          finish();
+        }
+      });
+
+      builder.create().show();
+    }
+
+    // Setup the map.
+    GoogleMap map = mapFragment.getMap();
+    map.setMyLocationEnabled(true);
+    map.setLocationSource(bestLocationProvider = new BestLocationProvider());
+
+    // Add the GPS status listener.
+    locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+  }
+
+  @Override
   protected void onStop() {
     super.onStop();
-    locationManager.removeUpdates(listener);
+
+    // Remove the GPS status listener.
+    locationManager.removeGpsStatusListener(gpsStatusListener);
   }
 }
