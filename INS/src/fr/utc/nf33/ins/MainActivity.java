@@ -75,7 +75,7 @@ public final class MainActivity extends FragmentActivity {
       if (currentBestLocation == null) return true;
 
       // Check whether the new location fix is newer or older.
-      long timeDelta = currentBestLocation.getTime() - currentBestLocation.getTime();
+      long timeDelta = location.getTime() - currentBestLocation.getTime();
       boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
       boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
       boolean isNewer = timeDelta > 0;
@@ -89,14 +89,14 @@ public final class MainActivity extends FragmentActivity {
 
       // Check whether the new location fix is more or less accurate.
       int accuracyDelta =
-          (int) (currentBestLocation.getAccuracy() - currentBestLocation.getAccuracy());
+          (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
       boolean isLessAccurate = accuracyDelta > 0;
       boolean isMoreAccurate = accuracyDelta < 0;
       boolean isSignificantlyLessAccurate = accuracyDelta > 200;
 
       // Check if the old and new location are from the same provider.
       boolean isFromSameProvider =
-          isSameProvider(currentBestLocation.getProvider(), currentBestLocation.getProvider());
+          isSameProvider(location.getProvider(), currentBestLocation.getProvider());
 
       // Determine location quality using a combination of timeliness and accuracy.
       if (isMoreAccurate)
@@ -146,6 +146,8 @@ public final class MainActivity extends FragmentActivity {
   //
   private final class GpsStatusListener implements GpsStatus.Listener {
     
+    float avg_snr = 0;
+    
     @Override
     public void onGpsStatusChanged(int event) {
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
@@ -163,9 +165,14 @@ public final class MainActivity extends FragmentActivity {
           else if (snr > snrs[2]) snrs[2] = snr;
         }
         float avg = (snrs[0] + snrs[1] + snrs[2]) / 3;
+        if(avg != 0)
+        {
+          avg_snr = avg;
+        }
+        
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-            + Float.toString(avg));
-        if(avg < 30)
+            + Float.toString(avg_snr));
+        if(avg_snr < 30)
         {
           showNotification();
         }
