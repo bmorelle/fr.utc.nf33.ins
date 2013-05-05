@@ -147,24 +147,35 @@ public final class MainActivity extends FragmentActivity {
   private final class GpsStatusListener implements GpsStatus.Listener {
     
     float avg_snr = 0;
+    int NUMBER_SATS = 3;
+    int SNR_LIMIT = 35;
     
     @Override
     public void onGpsStatusChanged(int event) {
+      
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
         // TODO
 
         GpsStatus status = locationManager.getGpsStatus(null);
-        float[] snrs = new float[3];
+        
+        float[] snrs = new float[NUMBER_SATS];
         float snr = 0;
+        float avg = 0;
+        int min = 0;
+        
         for (GpsSatellite sat : status.getSatellites()) {
+          min = 0;
           snr = sat.getSnr();
-          if (snr > snrs[0])
-            snrs[0] = snr;
-          else if (snr > snrs[1])
-            snrs[1] = snr;
-          else if (snr > snrs[2]) snrs[2] = snr;
+          for (int i = 0; i < NUMBER_SATS; ++i) {
+            if(snrs[i] < snrs[min]) { min = i; }
+          }
+          if(snr > snrs[min]) { snrs[min] = snr; }
         }
-        float avg = (snrs[0] + snrs[1] + snrs[2]) / 3;
+        for (float i : snrs) {
+          avg += i;
+        }
+        avg /= NUMBER_SATS;
+        
         if(avg != 0)
         {
           avg_snr = avg;
@@ -172,7 +183,7 @@ public final class MainActivity extends FragmentActivity {
         
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
             + Float.toString(avg_snr));
-        if(avg_snr < 30)
+        if(avg_snr < SNR_LIMIT)
         {
           showNotification();
         }
