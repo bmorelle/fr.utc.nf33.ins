@@ -1,8 +1,6 @@
 package fr.utc.nf33.ins;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
@@ -11,6 +9,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Menu;
@@ -26,19 +25,21 @@ import com.google.android.gms.maps.SupportMapFragment;
  * @author
  * 
  */
-public final class MainActivity extends FragmentActivity {
+public final class MainActivity extends FragmentActivity
+    implements
+      GpsDialogFragment.GpsDialogListener {
   //
   private final class BestLocationProvider implements LocationSource, LocationListener {
     //
     private static final float GPS_MIN_DISTANCE = 10;
     //
-    private static final long GPS_MIN_TIME = 3000;
+    private static final short GPS_MIN_TIME = 3000;
     //
     private static final float NETWORK_MIN_DISTANCE = 0;
     //
-    private static final long TWO_MINUTES = 1000 * 60 * 2;
+    private static final short NETWORK_MIN_TIME = 30000;
     //
-    private static final long NETWORK_MIN_TIME = 30000;
+    private static final int TWO_MINUTES = 1000 * 60 * 2;
 
     //
     private Location currentBestLocation;
@@ -88,8 +89,7 @@ public final class MainActivity extends FragmentActivity {
       else if (isSignificantlyOlder) return false;
 
       // Check whether the new location fix is more or less accurate.
-      int accuracyDelta =
-          (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+      int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
       boolean isLessAccurate = accuracyDelta > 0;
       boolean isMoreAccurate = accuracyDelta < 0;
       boolean isSignificantlyLessAccurate = accuracyDelta > 200;
@@ -145,53 +145,53 @@ public final class MainActivity extends FragmentActivity {
 
   //
   private final class GpsStatusListener implements GpsStatus.Listener {
-    
-    float avg_snr = 0;
-    int NUMBER_SATS = 3;
-    int SNR_LIMIT = 35;
-    
+    //
+    private float averageSnr = 0;
+    //
+    private final byte SATELLITES_COUNT = 3;
+    //
+    private final byte SNR_THRESHOLD = 35;
+    //
+    private DialogFragment transitionDialogFragment;
+
+    private void dismissTransitionDialogFragment() {
+      if (transitionDialogFragment != null) transitionDialogFragment.dismiss();
+    }
+
     @Override
     public void onGpsStatusChanged(int event) {
-      
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
         // TODO
+        float[] snrArr = new float[SATELLITES_COUNT];
 
-        GpsStatus status = locationManager.getGpsStatus(null);
-        
-        float[] snrs = new float[NUMBER_SATS];
-        float snr = 0;
-        float avg = 0;
-        int min = 0;
-        
-        for (GpsSatellite sat : status.getSatellites()) {
-          min = 0;
-          snr = sat.getSnr();
-          for (int i = 0; i < NUMBER_SATS; ++i) {
-            if(snrs[i] < snrs[min]) { min = i; }
-          }
-          if(snr > snrs[min]) { snrs[min] = snr; }
+        for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
+          int min = 0;
+          for (int s = 0; s < SATELLITES_COUNT; ++s)
+            if (snrArr[s] < snrArr[min]) min = s;
+
+          float snr = sat.getSnr();
+          if (snr > snrArr[min]) snrArr[min] = snr;
         }
-        for (float i : snrs) {
-          avg += i;
-        }
-        avg /= NUMBER_SATS;
-        
-        if(avg != 0)
-        {
-          avg_snr = avg;
-        }
-        
+
+        float newAvgSnr = 0;
+        for (float snr : snrArr)
+          newAvgSnr += snr;
+        newAvgSnr /= SATELLITES_COUNT;
+        if (newAvgSnr != 0) averageSnr = newAvgSnr;
+
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-            + Float.toString(avg_snr));
-        if(avg_snr < SNR_LIMIT)
-        {
-          showNotification();
-        }
+            + Float.toString(averageSnr));
+        if (averageSnr < SNR_THRESHOLD)
+          showTransitionDialogFragment();
         else
-        {
-          dismissNotification();
-        }
+          dismissTransitionDialogFragment();
       }
+    }
+
+    private void showTransitionDialogFragment() {
+      if (transitionDialogFragment == null)
+        transitionDialogFragment = new TransitionDialogFragment();
+      transitionDialogFragment.show(getSupportFragmentManager(), "TransitionDialogFragment");
     }
   }
 
@@ -214,16 +214,6 @@ public final class MainActivity extends FragmentActivity {
   private LocationManager locationManager;
   //
   private SupportMapFragment mapFragment;
-  
-  private AlertDialog notification;
-  
-  public void showNotification() {
-    notification.show();
-  }
-  
-  public void dismissNotification() {
-    notification.dismiss();
-  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -235,12 +225,6 @@ public final class MainActivity extends FragmentActivity {
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
-    
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle(R.string.snr_above_limit_title);
-    builder.setMessage(R.string.snr_above_limit_content);
-    builder.setCancelable(false);
-    notification = builder.create();
   }
 
   @Override
@@ -248,6 +232,17 @@ public final class MainActivity extends FragmentActivity {
     // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.main, menu);
     return true;
+  }
+
+  @Override
+  public void onGpsDialogCancel(DialogFragment dialog) {
+    finish();
+  }
+
+  @Override
+  public void onGpsDialogPositiveClick(DialogFragment dialog) {
+    Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+    startActivity(settingsIntent);
   }
 
   @Override
@@ -259,24 +254,8 @@ public final class MainActivity extends FragmentActivity {
 
     // Check whether the GPS provider is enabled.
     if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setTitle(R.string.gps_dialog_title);
-      builder.setMessage(R.string.gps_dialog_content);
-      builder.setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int id) {
-          Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-          startActivity(settingsIntent);
-        }
-      });
-      builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-        @Override
-        public void onCancel(DialogInterface dialog) {
-          finish();
-        }
-      });
-
-      builder.create().show();
+      DialogFragment dialog = new GpsDialogFragment();
+      dialog.show(getSupportFragmentManager(), "GpsDialogFragment");
     }
 
     // Setup the map.
