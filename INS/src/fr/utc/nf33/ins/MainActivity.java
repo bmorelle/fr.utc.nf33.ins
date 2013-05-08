@@ -2,6 +2,8 @@ package fr.utc.nf33.ins;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -12,6 +14,7 @@ import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
 
@@ -19,6 +22,9 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.SupportMapFragment;
+
+import fr.utc.nf33.ins.db.InsContract;
+import fr.utc.nf33.ins.db.InsDbHelper;
 
 /**
  * 
@@ -265,6 +271,23 @@ public final class MainActivity extends FragmentActivity
 
     // Add the GPS status listener.
     locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+
+    // TODO sample code to be removed
+    SQLiteDatabase db = new InsDbHelper(this).getReadableDatabase();
+    Cursor c =
+        db.rawQuery(
+            "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
+            null);
+    while (!c.moveToNext()) {
+      double latitude =
+          c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LATITUDE));
+      double longitude =
+          c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LONGITUDE));
+      StringBuilder sb = new StringBuilder();
+      sb.append("Entry Point at (").append(latitude).append(", ").append(longitude).append(")");
+      Log.d("MainActivity", sb.toString());
+    }
+    // TODO sample code to be removed
   }
 
   @Override
