@@ -24,5 +24,7 @@ public class InsDbHelper extends SQLiteAssetHelper {
    */
   public InsDbHelper(Context context) {
     super(context, DATABASE_NAME, null, DATABASE_VERSION);
+
+    setForcedUpgradeVersion(DATABASE_VERSION);
   }
 }
