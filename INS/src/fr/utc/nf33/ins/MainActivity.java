@@ -278,7 +278,7 @@ public final class MainActivity extends FragmentActivity
         db.rawQuery(
             "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
             null);
-    while (!c.moveToNext()) {
+    while (c.moveToNext()) {
       double latitude =
           c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LATITUDE));
       double longitude =
