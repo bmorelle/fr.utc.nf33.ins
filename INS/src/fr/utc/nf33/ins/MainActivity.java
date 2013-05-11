@@ -1,5 +1,6 @@
 package fr.utc.nf33.ins;
 
+
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -163,6 +164,12 @@ public final class MainActivity extends FragmentActivity
     private void dismissTransitionDialogFragment() {
       if (transitionDialogFragment != null) transitionDialogFragment.dismiss();
     }
+    
+    private void showTransitionDialogFragment() {
+      if (transitionDialogFragment == null)
+        transitionDialogFragment = new TransitionDialogFragment();
+      transitionDialogFragment.show(getSupportFragmentManager(), "TransitionDialogFragment");
+    }
 
     @Override
     public void onGpsStatusChanged(int event) {
@@ -184,20 +191,16 @@ public final class MainActivity extends FragmentActivity
           newAvgSnr += snr;
         newAvgSnr /= SATELLITES_COUNT;
         if (newAvgSnr != 0) averageSnr = newAvgSnr;
+        
+        double altitude = bestLocationProvider.currentBestLocation.getAltitude();
 
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-            + Float.toString(averageSnr));
+            + Float.toString(averageSnr) + " / Altitude : " + Double.toString(altitude));
         if (averageSnr < SNR_THRESHOLD)
           showTransitionDialogFragment();
         else
           dismissTransitionDialogFragment();
       }
-    }
-
-    private void showTransitionDialogFragment() {
-      if (transitionDialogFragment == null)
-        transitionDialogFragment = new TransitionDialogFragment();
-      transitionDialogFragment.show(getSupportFragmentManager(), "TransitionDialogFragment");
     }
   }
 
@@ -213,6 +216,7 @@ public final class MainActivity extends FragmentActivity
   }
 
   //
+  @SuppressWarnings("unused")
   private BestLocationProvider bestLocationProvider;
   //
   private GpsStatus.Listener gpsStatusListener;
@@ -287,6 +291,7 @@ public final class MainActivity extends FragmentActivity
       sb.append("Entry Point at (").append(latitude).append(", ").append(longitude).append(")");
       Log.d("MainActivity", sb.toString());
     }
+    db.close();
     // TODO sample code to be removed
   }
 
