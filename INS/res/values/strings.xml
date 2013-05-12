@@ -9,5 +9,6 @@
     <string name="gps_dialog_quit">Quit</string>
     <string name="transition_indoor">Passage en mode intérieur</string>
     <string name="transition_outdoor">Passage en mode extérieur</string>
+    <string name="indoor_text">Mode Indoor !</string>
 
 </resources>

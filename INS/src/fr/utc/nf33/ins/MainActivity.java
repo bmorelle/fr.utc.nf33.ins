@@ -172,7 +172,8 @@ GpsDialogFragment.GpsDialogListener {
     public void onReceive(Context context, Intent intent) {
       int newSituation = intent.getIntExtra("situation", LocationUpdater.OUTDOOR);
       if(newSituation == LocationUpdater.INDOOR) {
-        Toast.makeText(MainActivity.this, R.string.transition_indoor, Toast.LENGTH_LONG).show();
+        Intent newIntent = new Intent(MainActivity.this, IndoorActivity.class);
+        startActivity(newIntent);
       } else if (newSituation == LocationUpdater.OUTDOOR) {
         Toast.makeText(MainActivity.this, R.string.transition_outdoor, Toast.LENGTH_LONG).show();
       }
