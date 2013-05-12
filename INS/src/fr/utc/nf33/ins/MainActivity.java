@@ -142,6 +142,10 @@ GpsDialogFragment.GpsDialogListener {
       unbindService(mConnection);
       mBound = false;
     }
+    
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionBroadcast);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mSNRBroadcast);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewPosition);
   }
 
   /** Defines callbacks for service binding, passed to bindService() */
