@@ -20,7 +20,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -174,8 +173,6 @@ GpsDialogFragment.GpsDialogListener {
       if(newSituation == LocationUpdater.INDOOR) {
         Intent newIntent = new Intent(MainActivity.this, IndoorActivity.class);
         startActivity(newIntent);
-      } else if (newSituation == LocationUpdater.OUTDOOR) {
-        Toast.makeText(MainActivity.this, R.string.transition_outdoor, Toast.LENGTH_LONG).show();
       }
     }
   };
