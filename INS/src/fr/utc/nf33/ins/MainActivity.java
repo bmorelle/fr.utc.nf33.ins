@@ -135,8 +135,7 @@ GpsDialogFragment.GpsDialogListener {
 
   @Override
   protected void onStop() {
-    super.onStop();
-
+    
     if (mBound) {
       unbindService(mConnection);
       mBound = false;
@@ -145,6 +144,13 @@ GpsDialogFragment.GpsDialogListener {
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionBroadcast);
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mSNRBroadcast);
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewPosition);
+    
+    super.onStop();
+  }
+  
+  @Override
+  public void onBackPressed() {
+    finish();
   }
 
   /** Defines callbacks for service binding, passed to bindService() */

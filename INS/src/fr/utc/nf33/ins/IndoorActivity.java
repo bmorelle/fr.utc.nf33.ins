@@ -1,6 +1,5 @@
 package fr.utc.nf33.ins;
 
-import fr.utc.nf33.ins.LocationUpdater.LocalBinder;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -13,6 +12,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
+import fr.utc.nf33.ins.LocationUpdater.LocalBinder;
 
 public class IndoorActivity extends Activity {
   
@@ -25,14 +25,14 @@ public class IndoorActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       setContentView(R.layout.activity_indoor);
+      
+      // Bind to the Service
+      Intent intent = new Intent(this, LocationUpdater.class);
+      bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
   
   @Override
   protected void onStart() {
-    
- // Bind to the Service
-    Intent intent = new Intent(this, LocationUpdater.class);
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
  // Register for Broadcasts
     LocalBroadcastManager.getInstance(this).registerReceiver(
@@ -45,11 +45,20 @@ public class IndoorActivity extends Activity {
   
   @Override
   protected void onStop() {
-    super.onStop();
+    
+    if (mBound) {
+      unbindService(mConnection);
+      mBound = false;
+    }
     
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionBroadcast);
     LocalBroadcastManager.getInstance(this).unregisterReceiver(mSNRBroadcast);
     
+    super.onStop();
+  }
+  
+  @Override
+  public void onBackPressed() {
   }
   
   private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
