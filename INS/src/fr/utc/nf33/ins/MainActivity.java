@@ -1,9 +1,11 @@
 package fr.utc.nf33.ins;
 
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,20 +16,25 @@ import android.provider.Settings;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import fr.utc.nf33.ins.LocationUpdater.LocalBinder;
 import fr.utc.nf33.ins.db.InsContract;
 import fr.utc.nf33.ins.db.InsDbHelper;
 
 public final class MainActivity extends FragmentActivity
-    implements
-      GpsDialogFragment.GpsDialogListener {
+implements
+GpsDialogFragment.GpsDialogListener {
   //
   private static final GoogleMapOptions GOOGLE_MAP_OPTIONS = new GoogleMapOptions();
   static {
@@ -38,13 +45,13 @@ public final class MainActivity extends FragmentActivity
     GOOGLE_MAP_OPTIONS.zoomControlsEnabled(false);
     GOOGLE_MAP_OPTIONS.zoomGesturesEnabled(true);
   }
-  
+
   private LocationManager locationManager;
 
   private SupportMapFragment mapFragment;
-  
+
   private LocationUpdater mService;
-  
+
   private boolean mBound = false;
 
   @Override
@@ -57,7 +64,7 @@ public final class MainActivity extends FragmentActivity
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
-    
+
   }
 
   @Override
@@ -90,24 +97,21 @@ public final class MainActivity extends FragmentActivity
       DialogFragment dialog = new GpsDialogFragment();
       dialog.show(getSupportFragmentManager(), "GpsDialogFragment");
     }
-    
+
     // Bind to the Service
     Intent intent = new Intent(this, LocationUpdater.class);
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-    
-    if(mService == null) {
-      Log.d("Service", "NULL");
-    }
-    
+
     // Setup the map.
     GoogleMap map = mapFragment.getMap();
     map.setMyLocationEnabled(true);
 
+    // DataBase Stuff
     SQLiteDatabase db = new InsDbHelper(this).getReadableDatabase();
     Cursor c =
         db.rawQuery(
-            "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
-            null);
+          "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
+          null);
     while (c.moveToNext()) {
       double latitude =
           c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LATITUDE));
@@ -118,12 +122,22 @@ public final class MainActivity extends FragmentActivity
       Log.d("MainActivity", sb.toString());
     }
     db.close();
+
+    // Register for Broadcasts
+    LocalBroadcastManager.getInstance(this).registerReceiver(
+      mTransitionBroadcast, new IntentFilter("transition"));
+    LocalBroadcastManager.getInstance(this).registerReceiver(
+      mSNRBroadcast, new IntentFilter("snr"));
+    LocalBroadcastManager.getInstance(this).registerReceiver(
+      mNewPosition, new IntentFilter("new_position"));
   }
+
+
 
   @Override
   protected void onStop() {
     super.onStop();
-    
+
     if (mBound) {
       unbindService(mConnection);
       mBound = false;
@@ -133,19 +147,52 @@ public final class MainActivity extends FragmentActivity
   /** Defines callbacks for service binding, passed to bindService() */
   private ServiceConnection mConnection = new ServiceConnection() {
 
-      @Override
-      public void onServiceConnected(ComponentName className,
-              IBinder service) {
-          // We've bound to LocationUpdater, cast the IBinder and get LocationUpdater instance
-          LocalBinder binder = (LocalBinder) service;
-          mService = binder.getService();
-          mBound = true;
-          mapFragment.getMap().setLocationSource(mService.getBestLocationProvider());
-      }
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+      // We've bound to LocationUpdater, cast the IBinder and get LocationUpdater instance
+      LocalBinder binder = (LocalBinder) service;
+      mService = binder.getService();
+      mBound = true;
+      mapFragment.getMap().setLocationSource(mService.getBestLocationProvider());
+    }
 
-      @Override
-      public void onServiceDisconnected(ComponentName arg0) {
-          mBound = false;
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      mBound = false;
+    }
+  };
+
+  private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      int newSituation = intent.getIntExtra("situation", LocationUpdater.OUTDOOR);
+      if(newSituation == LocationUpdater.INDOOR) {
+        Toast.makeText(MainActivity.this, R.string.transition_indoor, Toast.LENGTH_LONG).show();
+      } else if (newSituation == LocationUpdater.OUTDOOR) {
+        Toast.makeText(MainActivity.this, R.string.transition_outdoor, Toast.LENGTH_LONG).show();
       }
+    }
+  };
+
+  private BroadcastReceiver mSNRBroadcast = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      float snr = intent.getFloatExtra("snr", 0);
+      ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
+          + Float.toString(snr));
+    }
+  };
+
+  private BroadcastReceiver mNewPosition = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      double lat = intent.getDoubleExtra("latitude", 0);
+      double lon = intent.getDoubleExtra("longitude", 0);
+      mapFragment.getMap().animateCamera(
+        CameraUpdateFactory.newLatLngZoom(
+          new LatLng(lat, lon),
+          (float) 17.0));
+    }
   };
 }

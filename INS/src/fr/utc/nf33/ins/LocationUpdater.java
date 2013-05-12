@@ -11,13 +11,12 @@ import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.app.DialogFragment;
-import android.util.Log;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.LocationSource;
 
 public class LocationUpdater extends Service {
-  
+
   // Binder given to clients
   private final IBinder mBinder = new LocalBinder();
 
@@ -27,43 +26,78 @@ public class LocationUpdater extends Service {
    */
   public class LocalBinder extends Binder {
     LocationUpdater getService() {
-          // Return this instance of LocationUpdater so clients can call public methods
-          return LocationUpdater.this;
-      }
+      // Return this instance of LocationUpdater so clients can call public methods
+      return LocationUpdater.this;
+    }
   }
 
   @Override
   public IBinder onBind(Intent intent) {
-    
+
     locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     bestLocationProvider = new BestLocationProvider();
     gpsStatusListener = new GpsStatusListener();
     locationManager.addGpsStatusListener(gpsStatusListener);
-      return mBinder;
+    return mBinder;
   }
-  
+
   @Override
   public boolean onUnbind(Intent intent) {
     locationManager.removeGpsStatusListener(gpsStatusListener);
     return super.onUnbind(intent);
   }
-  
-  //
+
   private BestLocationProvider bestLocationProvider;
-  //
-  private GpsStatus.Listener gpsStatusListener;
-  //
+
+  private GpsStatusListener gpsStatusListener;
+
   private LocationManager locationManager;
-  
+
+  public static final int INDOOR = 0;
+  public static final int OUTDOOR = 1;
+
+  private enum BroadcastTypes {
+    TRANSITION_INDOOR, TRANSITION_OUTDOOR, WRITE_SNR, NEW_POSITION
+  }
+
+  private void sendBroadcast(BroadcastTypes type) {
+    Intent intent;
+    switch(type){
+      case TRANSITION_INDOOR:
+        intent = new Intent("transition");
+        intent.putExtra("situation", INDOOR);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        break;
+      case TRANSITION_OUTDOOR:
+        intent = new Intent("transition");
+        intent.putExtra("situation", OUTDOOR);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        break;
+      case WRITE_SNR:
+        intent = new Intent("snr");
+        intent.putExtra("snr", gpsStatusListener.averageSnr);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        break;
+      case NEW_POSITION:
+        intent = new Intent("new_position");
+        intent.putExtra("latitude", bestLocationProvider.currentBestLocation.getLatitude());
+        intent.putExtra("longitude", bestLocationProvider.currentBestLocation.getLongitude());
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        break;
+    }
+  }
+
+  private int currentSituation = OUTDOOR;
+
   public BestLocationProvider getBestLocationProvider() {
     return bestLocationProvider;
   }
-  
+
   public GpsStatus.Listener getGpsStatusListener() {
     return gpsStatusListener;
   }
-  
-  public final class BestLocationProvider implements LocationSource, LocationListener {
+
+  private final class BestLocationProvider implements LocationSource, LocationListener {
     //
     private static final float GPS_MIN_DISTANCE = 10;
     //
@@ -85,11 +119,11 @@ public class LocationUpdater extends Service {
 
       if (locationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
-            GPS_MIN_DISTANCE, this);
+          GPS_MIN_DISTANCE, this);
 
       if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
-            NETWORK_MIN_DISTANCE, this);
+          NETWORK_MIN_DISTANCE, this);
     }
 
     @Override
@@ -155,10 +189,8 @@ public class LocationUpdater extends Service {
 
       currentBestLocation = location;
       listener.onLocationChanged(currentBestLocation);
-//      mapFragment.getMap().animateCamera(
-//          CameraUpdateFactory.newLatLngZoom(
-//              new LatLng(location.getLatitude(), location.getLongitude()),
-//              (float) 17.0));
+      
+      sendBroadcast(BroadcastTypes.NEW_POSITION);
     }
 
     @Override
@@ -175,36 +207,22 @@ public class LocationUpdater extends Service {
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
-    
-  }
-  
-  public final class GpsStatusListener implements GpsStatus.Listener {
-    //
-    private float averageSnr = 0;
-    //
-    private final byte SATELLITES_COUNT = 3;
-    //
-    private final byte SNR_THRESHOLD = 35;
-    //
-    private DialogFragment transitionDialogFragment;
 
-//    private void dismissTransitionDialogFragment() {
-//      if (transitionDialogFragment != null) transitionDialogFragment.dismiss();
-//    }
-//
-//    private void showTransitionDialogFragment() {
-//      if (transitionDialogFragment == null) {
-//        Log.d("TransitionDialogFragment", "showTransition");
-//        transitionDialogFragment = new TransitionDialogFragment();
-//      }
-//      transitionDialogFragment.show(getSupportFragmentManager(), "TransitionDialogFragment");
-//    }
+  }
+
+  private final class GpsStatusListener implements GpsStatus.Listener {
+
+    private float averageSnr = 0;
+
+    private final byte SATELLITES_COUNT = 3;
+
+    private final byte SNR_THRESHOLD = 35;
 
     @Override
     public void onGpsStatusChanged(int event) {
-      
+
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
-        Log.d("Service", "SNR");
+
         float[] snrArr = new float[SATELLITES_COUNT];
 
         for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
@@ -222,12 +240,16 @@ public class LocationUpdater extends Service {
         newAvgSnr /= SATELLITES_COUNT;
         if (newAvgSnr != 0) averageSnr = newAvgSnr;
 
-//        ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-//            + Float.toString(averageSnr));
-//        if (averageSnr < SNR_THRESHOLD)
-//          showTransitionDialogFragment();
-//        else
-//          dismissTransitionDialogFragment();
+        sendBroadcast(BroadcastTypes.WRITE_SNR);
+
+        if(averageSnr < SNR_THRESHOLD && currentSituation != INDOOR) {
+          currentSituation = INDOOR;
+          sendBroadcast(BroadcastTypes.TRANSITION_INDOOR);
+        }
+        else if(averageSnr >= SNR_THRESHOLD && currentSituation != OUTDOOR){
+          currentSituation = OUTDOOR;
+          sendBroadcast(BroadcastTypes.TRANSITION_OUTDOOR);
+        }
       }
     }
   }
