@@ -217,11 +217,17 @@ public class LocationUpdater extends Service {
     private final byte SATELLITES_COUNT = 3;
 
     private final byte SNR_THRESHOLD = 35;
+    
+    private boolean firstFix = false;
 
     @Override
     public void onGpsStatusChanged(int event) {
+      
+      if(event == GpsStatus.GPS_EVENT_FIRST_FIX) {
+        firstFix = true;
+      }
 
-      if (event == GpsStatus.GPS_EVENT_STOPPED) {
+      if (event == GpsStatus.GPS_EVENT_STOPPED && firstFix) {
 
         float[] snrArr = new float[SATELLITES_COUNT];
 
