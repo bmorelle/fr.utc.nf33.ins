@@ -19,10 +19,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 
 import fr.utc.nf33.ins.db.InsContract;
 import fr.utc.nf33.ins.db.InsDbHelper;
@@ -130,6 +132,10 @@ public final class MainActivity extends FragmentActivity
 
       currentBestLocation = location;
       listener.onLocationChanged(currentBestLocation);
+      mapFragment.getMap().animateCamera(
+          CameraUpdateFactory.newLatLngZoom(
+              new LatLng(location.getLatitude(), location.getLongitude()),
+              (float) 17.0));
     }
 
     @Override
@@ -162,10 +168,12 @@ public final class MainActivity extends FragmentActivity
     private void dismissTransitionDialogFragment() {
       if (transitionDialogFragment != null) transitionDialogFragment.dismiss();
     }
-    
+
     private void showTransitionDialogFragment() {
-      if (transitionDialogFragment == null)
+      if (transitionDialogFragment == null) {
+        Log.d("TransitionDialogFragment", "showTransition");
         transitionDialogFragment = new TransitionDialogFragment();
+      }
       transitionDialogFragment.show(getSupportFragmentManager(), "TransitionDialogFragment");
     }
 
@@ -188,11 +196,9 @@ public final class MainActivity extends FragmentActivity
           newAvgSnr += snr;
         newAvgSnr /= SATELLITES_COUNT;
         if (newAvgSnr != 0) averageSnr = newAvgSnr;
-        
-        double altitude = bestLocationProvider.currentBestLocation.getAltitude();
 
         ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-            + Float.toString(averageSnr) + " / Altitude : " + Double.toString(altitude));
+            + Float.toString(averageSnr));
         if (averageSnr < SNR_THRESHOLD)
           showTransitionDialogFragment();
         else

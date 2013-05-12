@@ -9,6 +9,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.util.Log;
 
 /**
  *
@@ -38,6 +39,7 @@ public class GpsDialogFragment extends DialogFragment {
       // Instantiate the GpsDialogListener so we can send events to the host.
       listener = (GpsDialogListener) activity;
     } catch (ClassCastException e) {
+      Log.d("GPSDialogFragment", "OnAttach");
       // The activity doesn't implement the interface, throw exception.
       throw new ClassCastException(activity.toString() + " must implement GpsDialogListener.");
     }
