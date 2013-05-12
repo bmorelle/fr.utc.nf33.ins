@@ -130,8 +130,6 @@ public final class MainActivity extends FragmentActivity
 
       currentBestLocation = location;
       listener.onLocationChanged(currentBestLocation);
-
-      // TODO
     }
 
     @Override
@@ -174,7 +172,6 @@ public final class MainActivity extends FragmentActivity
     @Override
     public void onGpsStatusChanged(int event) {
       if (event == GpsStatus.GPS_EVENT_STOPPED) {
-        // TODO
         float[] snrArr = new float[SATELLITES_COUNT];
 
         for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
@@ -216,7 +213,6 @@ public final class MainActivity extends FragmentActivity
   }
 
   //
-  @SuppressWarnings("unused")
   private BestLocationProvider bestLocationProvider;
   //
   private GpsStatus.Listener gpsStatusListener;
@@ -276,7 +272,6 @@ public final class MainActivity extends FragmentActivity
     // Add the GPS status listener.
     locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
 
-    // TODO sample code to be removed
     SQLiteDatabase db = new InsDbHelper(this).getReadableDatabase();
     Cursor c =
         db.rawQuery(
@@ -292,7 +287,6 @@ public final class MainActivity extends FragmentActivity
       Log.d("MainActivity", sb.toString());
     }
     db.close();
-    // TODO sample code to be removed
   }
 
   @Override
