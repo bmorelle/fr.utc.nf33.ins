@@ -16,7 +16,7 @@ public final class InsContract {
    * @author
    * 
    */
-  public static abstract class Building implements BaseColumns {
+  public static final class Building implements BaseColumns {
     /**
      * 
      */
@@ -33,6 +33,11 @@ public final class InsContract {
      * 
      */
     public static final String TABLE_NAME = "Building";
+
+    // Suppress default constructor for noninstantiability.
+    private Building() {
+
+    }
   }
 
   /**
@@ -40,7 +45,7 @@ public final class InsContract {
    * @author
    * 
    */
-  public static abstract class EntryPoint implements BaseColumns {
+  public static final class EntryPoint implements BaseColumns {
     /**
      * 
      */
@@ -69,9 +74,14 @@ public final class InsContract {
      * 
      */
     public static final String TABLE_NAME = "EntryPoint";
+
+    // Suppress default constructor for noninstantiability.
+    private EntryPoint() {
+
+    }
   }
 
-  //
+  // Suppress default constructor for noninstantiability.
   private InsContract() {
 
   }

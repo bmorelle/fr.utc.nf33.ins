@@ -1,11 +1,12 @@
+/**
+ * 
+ */
 package fr.utc.nf33.ins;
-
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,9 +32,14 @@ import fr.utc.nf33.ins.LocationService.LocalBinder;
 import fr.utc.nf33.ins.db.InsContract;
 import fr.utc.nf33.ins.db.InsDbHelper;
 
+/**
+ * 
+ * @author
+ * 
+ */
 public final class OutdoorActivity extends FragmentActivity
-implements
-GpsDialogFragment.GpsDialogListener {
+    implements
+      GpsDialogFragment.GpsDialogListener {
   //
   private static final GoogleMapOptions GOOGLE_MAP_OPTIONS = new GoogleMapOptions();
   static {
@@ -45,13 +51,34 @@ GpsDialogFragment.GpsDialogListener {
     GOOGLE_MAP_OPTIONS.zoomGesturesEnabled(true);
   }
 
+  //
+  private boolean bound;
+
+  // Defines callbacks for service binding, passed to bindService().
+  private ServiceConnection connection;
+
+  //
   private LocationManager locationManager;
 
+  //
+  private LocationService locationService;
+
+  //
   private SupportMapFragment mapFragment;
 
-  private LocationService mService;
+  //
+  private BroadcastReceiver newLocationReceiver;
 
-  private boolean mBound = false;
+  //
+  private BroadcastReceiver newSnrReceiver;
+
+  //
+  private BroadcastReceiver transitionReceiver;
+
+  @Override
+  public void onBackPressed() {
+    finish();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +91,8 @@ GpsDialogFragment.GpsDialogListener {
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
 
+    // The Location Service is not bound.
+    bound = false;
   }
 
   @Override
@@ -94,23 +123,77 @@ GpsDialogFragment.GpsDialogListener {
     // Check whether the GPS provider is enabled.
     if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
       DialogFragment dialog = new GpsDialogFragment();
-      dialog.show(getSupportFragmentManager(), "GpsDialogFragment");
+      dialog.show(getSupportFragmentManager(), GpsDialogFragment.NAME);
     }
-
-    // Bind to the Service
-    Intent intent = new Intent(this, LocationService.class);
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Setup the map.
     GoogleMap map = mapFragment.getMap();
     map.setMyLocationEnabled(true);
 
-    // DataBase Stuff
+    // Connect to the Location Service.
+    connection = new ServiceConnection() {
+      @Override
+      public void onServiceConnected(ComponentName className, IBinder service) {
+        // We've bound to LocationService, cast the IBinder and get LocationService instance.
+        bound = true;
+        locationService = ((LocalBinder) service).getService();
+        mapFragment.getMap().setLocationSource(locationService.getBestLocationProvider());
+      }
+
+      @Override
+      public void onServiceDisconnected(ComponentName arg0) {
+        bound = false;
+      }
+    };
+    bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
+
+    // Register receivers.
+    newLocationReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        double lat =
+            intent.getDoubleExtra(LocationService.PrivateIntent.NewLocation.EXTRA_LATITUDE, 0);
+        double lon =
+            intent.getDoubleExtra(LocationService.PrivateIntent.NewLocation.EXTRA_LONGITUDE, 0);
+        mapFragment.getMap().animateCamera(
+            CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), (float) 17.0));
+      }
+    };
+    LocalBroadcastManager.getInstance(this).registerReceiver(newLocationReceiver,
+        LocationService.PrivateIntent.NewLocation.newIntentFilter());
+
+    newSnrReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        float snr = intent.getFloatExtra(LocationService.PrivateIntent.NewSnr.EXTRA_SNR, 0);
+        ((TextView) OutdoorActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
+            + Float.toString(snr));
+      }
+    };
+    LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
+        LocationService.PrivateIntent.NewSnr.newIntentFilter());
+
+    transitionReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        State newState =
+            State.valueOf(intent
+                .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
+        if (newState == State.INDOOR) {
+          Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
+          startActivity(newIntent);
+        }
+      }
+    };
+    LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
+        LocationService.PrivateIntent.Transition.newIntentFilter());
+
+    // TODO: remove dataBase stuff.
     SQLiteDatabase db = new InsDbHelper(this).getReadableDatabase();
     Cursor c =
         db.rawQuery(
-          "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
-          null);
+            "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
+            null);
     while (c.moveToNext()) {
       double latitude =
           c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LATITUDE));
@@ -121,86 +204,21 @@ GpsDialogFragment.GpsDialogListener {
       Log.d("MainActivity", sb.toString());
     }
     db.close();
-
-    // Register for Broadcasts
-    LocalBroadcastManager.getInstance(this).registerReceiver(
-      mTransitionBroadcast, new IntentFilter("transition"));
-    LocalBroadcastManager.getInstance(this).registerReceiver(
-      mSNRBroadcast, new IntentFilter("snr"));
-    LocalBroadcastManager.getInstance(this).registerReceiver(
-      mNewPosition, new IntentFilter("new_position"));
   }
-
-
 
   @Override
   protected void onStop() {
-    
-    if (mBound) {
-      unbindService(mConnection);
-      mBound = false;
+    // Disconnect from the Location Service.
+    if (bound) {
+      unbindService(connection);
+      bound = false;
     }
-    
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionBroadcast);
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mSNRBroadcast);
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewPosition);
-    
+
+    // Unregister receivers.
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(newLocationReceiver);
+
     super.onStop();
   }
-  
-  @Override
-  public void onBackPressed() {
-    finish();
-  }
-
-  /** Defines callbacks for service binding, passed to bindService() */
-  private ServiceConnection mConnection = new ServiceConnection() {
-
-    @Override
-    public void onServiceConnected(ComponentName className,
-                                   IBinder service) {
-      // We've bound to LocationUpdater, cast the IBinder and get LocationUpdater instance
-      LocalBinder binder = (LocalBinder) service;
-      mService = binder.getService();
-      mBound = true;
-      mapFragment.getMap().setLocationSource(mService.getBestLocationProvider());
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-      mBound = false;
-    }
-  };
-
-  private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      int newSituation = intent.getIntExtra("situation", LocationService.OUTDOOR);
-      if(newSituation == LocationService.INDOOR) {
-        Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
-        startActivity(newIntent);
-      }
-    }
-  };
-
-  private BroadcastReceiver mSNRBroadcast = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      float snr = intent.getFloatExtra("snr", 0);
-      ((TextView) OutdoorActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-          + Float.toString(snr));
-    }
-  };
-
-  private BroadcastReceiver mNewPosition = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      double lat = intent.getDoubleExtra("latitude", 0);
-      double lon = intent.getDoubleExtra("longitude", 0);
-      mapFragment.getMap().animateCamera(
-        CameraUpdateFactory.newLatLngZoom(
-          new LatLng(lat, lon),
-          (float) 17.0));
-    }
-  };
 }

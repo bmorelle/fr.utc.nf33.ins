@@ -1,101 +1,109 @@
+/**
+ * 
+ */
 package fr.utc.nf33.ins;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
-import fr.utc.nf33.ins.LocationService.LocalBinder;
 
+/**
+ * 
+ * @author
+ * 
+ */
 public class IndoorActivity extends Activity {
-  
-  private LocationService mService;
+  //
+  private boolean bound;
 
-  private boolean mBound = false;
-  
-  @SuppressLint("NewApi")
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      setContentView(R.layout.activity_indoor);
-      
-      // Bind to the Service
-      Intent intent = new Intent(this, LocationService.class);
-      bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-  }
-  
-  @Override
-  protected void onStart() {
+  //
+  private ServiceConnection connection;
 
- // Register for Broadcasts
-    LocalBroadcastManager.getInstance(this).registerReceiver(
-      mTransitionBroadcast, new IntentFilter("transition"));
-    LocalBroadcastManager.getInstance(this).registerReceiver(
-      mSNRBroadcast, new IntentFilter("snr"));
-    
-    super.onStart();
-  }
-  
-  @Override
-  protected void onStop() {
-    
-    if (mBound) {
-      unbindService(mConnection);
-      mBound = false;
-    }
-    
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionBroadcast);
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mSNRBroadcast);
-    
-    super.onStop();
-  }
-  
+  //
+  private BroadcastReceiver newSnrReceiver;
+
+  //
+  private BroadcastReceiver transitionReceiver;
+
   @Override
   public void onBackPressed() {
+
   }
-  
-  private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      int newSituation = intent.getIntExtra("situation", LocationService.OUTDOOR);
-      if (newSituation == LocationService.OUTDOOR) {
-        Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
-        startActivity(newIntent);
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_indoor);
+
+    // The Location Service is not bound.
+    bound = false;
+  }
+
+  @Override
+  protected void onStart() {
+    // Connect to the Location Service.
+    connection = new ServiceConnection() {
+      @Override
+      public void onServiceConnected(ComponentName className, IBinder service) {
+        bound = true;
       }
-    }
-  };
-  
-  private BroadcastReceiver mSNRBroadcast = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      float snr = intent.getFloatExtra("snr", 0);
-      ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
-          + Float.toString(snr));
-    }
-  };
-  
-  private ServiceConnection mConnection = new ServiceConnection() {
 
-    @Override
-    public void onServiceConnected(ComponentName className,
-                                   IBinder service) {
-      // We've bound to LocationUpdater, cast the IBinder and get LocationUpdater instance
-      LocalBinder binder = (LocalBinder) service;
-      mService = binder.getService();
-      mBound = true;
+      @Override
+      public void onServiceDisconnected(ComponentName arg0) {
+        bound = false;
+      }
+    };
+    bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
+
+    // Register receivers.
+    newSnrReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        float snr = intent.getFloatExtra(LocationService.PrivateIntent.NewSnr.EXTRA_SNR, 0);
+        ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
+            + Float.toString(snr));
+      }
+    };
+    LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
+        LocationService.PrivateIntent.NewSnr.newIntentFilter());
+
+    transitionReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        State newState =
+            State.valueOf(intent
+                .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
+        if (newState == State.OUTDOOR) {
+          Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
+          startActivity(newIntent);
+        }
+      }
+    };
+    LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
+        LocationService.PrivateIntent.Transition.newIntentFilter());
+
+    super.onStart();
+  }
+
+  @Override
+  protected void onStop() {
+    // Disconnect from the Location Service.
+    if (bound) {
+      unbindService(connection);
+      bound = false;
     }
 
-    @Override
-    public void onServiceDisconnected(ComponentName arg0) {
-      mBound = false;
-    }
-  };
+    // Unregister receivers.
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
 
+    super.onStop();
+  }
 }

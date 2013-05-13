@@ -1,8 +1,12 @@
+/**
+ * 
+ */
 package fr.utc.nf33.ins;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -15,88 +19,13 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.LocationSource;
 
+/**
+ * 
+ * @author
+ * 
+ */
 public class LocationService extends Service {
-
-  // Binder given to clients
-  private final IBinder mBinder = new LocalBinder();
-
-  /**
-   * Class used for the client Binder.  Because we know this service always
-   * runs in the same process as its clients, we don't need to deal with IPC.
-   */
-  public class LocalBinder extends Binder {
-    LocationService getService() {
-      // Return this instance of LocationUpdater so clients can call public methods
-      return LocationService.this;
-    }
-  }
-
-  @Override
-  public IBinder onBind(Intent intent) {
-
-    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    bestLocationProvider = new BestLocationProvider();
-    gpsStatusListener = new GpsStatusListener();
-    locationManager.addGpsStatusListener(gpsStatusListener);
-    return mBinder;
-  }
-
-  @Override
-  public boolean onUnbind(Intent intent) {
-    locationManager.removeGpsStatusListener(gpsStatusListener);
-    return super.onUnbind(intent);
-  }
-
-  private BestLocationProvider bestLocationProvider;
-
-  private GpsStatusListener gpsStatusListener;
-
-  private LocationManager locationManager;
-
-  public static final int INDOOR = 0;
-  public static final int OUTDOOR = 1;
-
-  private enum BroadcastTypes {
-    TRANSITION_INDOOR, TRANSITION_OUTDOOR, WRITE_SNR, NEW_POSITION
-  }
-
-  private void sendBroadcast(BroadcastTypes type) {
-    Intent intent;
-    switch(type){
-      case TRANSITION_INDOOR:
-        intent = new Intent("transition");
-        intent.putExtra("situation", INDOOR);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        break;
-      case TRANSITION_OUTDOOR:
-        intent = new Intent("transition");
-        intent.putExtra("situation", OUTDOOR);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        break;
-      case WRITE_SNR:
-        intent = new Intent("snr");
-        intent.putExtra("snr", gpsStatusListener.averageSnr);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        break;
-      case NEW_POSITION:
-        intent = new Intent("new_position");
-        intent.putExtra("latitude", bestLocationProvider.currentBestLocation.getLatitude());
-        intent.putExtra("longitude", bestLocationProvider.currentBestLocation.getLongitude());
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-        break;
-    }
-  }
-
-  private int currentSituation = OUTDOOR;
-
-  public BestLocationProvider getBestLocationProvider() {
-    return bestLocationProvider;
-  }
-
-  public GpsStatus.Listener getGpsStatusListener() {
-    return gpsStatusListener;
-  }
-
+  //
   private final class BestLocationProvider implements LocationSource, LocationListener {
     //
     private static final float GPS_MIN_DISTANCE = 10;
@@ -119,11 +48,11 @@ public class LocationService extends Service {
 
       if (locationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
-          GPS_MIN_DISTANCE, this);
+            GPS_MIN_DISTANCE, this);
 
       if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
-          NETWORK_MIN_DISTANCE, this);
+            NETWORK_MIN_DISTANCE, this);
     }
 
     @Override
@@ -189,8 +118,10 @@ public class LocationService extends Service {
 
       currentBestLocation = location;
       listener.onLocationChanged(currentBestLocation);
-      
-      sendBroadcast(BroadcastTypes.NEW_POSITION);
+
+      LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
+          PrivateIntent.NewLocation.newIntent(currentBestLocation.getLatitude(),
+              currentBestLocation.getLongitude()));
     }
 
     @Override
@@ -210,24 +141,27 @@ public class LocationService extends Service {
 
   }
 
+  //
   private final class GpsStatusListener implements GpsStatus.Listener {
-
+    //
     private float averageSnr = 0;
 
+    //
+    private boolean firstFix = false;
+
+    //
     private final byte SATELLITES_COUNT = 3;
 
+    //
     private final byte SNR_THRESHOLD = 35;
-    
-    private boolean firstFix = false;
 
     @Override
     public void onGpsStatusChanged(int event) {
-      
-      if(event == GpsStatus.GPS_EVENT_FIRST_FIX) {
+      if (event == GpsStatus.GPS_EVENT_FIRST_FIX) {
         firstFix = true;
       }
 
-      if (event == GpsStatus.GPS_EVENT_STOPPED && firstFix) {
+      if ((event == GpsStatus.GPS_EVENT_STOPPED) && firstFix) {
 
         float[] snrArr = new float[SATELLITES_COUNT];
 
@@ -246,17 +180,221 @@ public class LocationService extends Service {
         newAvgSnr /= SATELLITES_COUNT;
         if (newAvgSnr != 0) averageSnr = newAvgSnr;
 
-        sendBroadcast(BroadcastTypes.WRITE_SNR);
+        LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
+            PrivateIntent.NewSnr.newIntent(averageSnr));
 
-        if(averageSnr < SNR_THRESHOLD && currentSituation != INDOOR) {
-          currentSituation = INDOOR;
-          sendBroadcast(BroadcastTypes.TRANSITION_INDOOR);
-        }
-        else if(averageSnr >= SNR_THRESHOLD && currentSituation != OUTDOOR){
-          currentSituation = OUTDOOR;
-          sendBroadcast(BroadcastTypes.TRANSITION_OUTDOOR);
+        if ((averageSnr < SNR_THRESHOLD) && (state != State.INDOOR)) {
+          state = State.INDOOR;
+          LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
+              PrivateIntent.Transition.newIntent(state.toString()));
+        } else if ((averageSnr >= SNR_THRESHOLD) && (state != State.OUTDOOR)) {
+          state = State.OUTDOOR;
+          LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
+              PrivateIntent.Transition.newIntent(state.toString()));
         }
       }
     }
+  }
+
+  /**
+   * Class used for the client Binder. Because we know this service always runs in the same process
+   * as its clients, we don't need to deal with IPC.
+   */
+  public class LocalBinder extends Binder {
+    LocationService getService() {
+      // Return this instance of LocationService so that clients can call public methods.
+      return LocationService.this;
+    }
+  }
+
+  /**
+   * 
+   * @author
+   * 
+   */
+  public static final class PrivateIntent {
+    /**
+     * 
+     * @author
+     * 
+     */
+    public static final class NewLocation {
+      /**
+       * 
+       */
+      public static final String EXTRA_LATITUDE = "fr.utc.nf33.ins.LATITUDE";
+
+      /**
+       * 
+       */
+      public static final String EXTRA_LONGITUDE = "fr.utc.nf33.ins.LONGITUDE";
+
+      /**
+       * 
+       */
+      public static final String NAME = "NEW_LOCATION";
+
+      /**
+       * 
+       * @param lat
+       * @param lon
+       * @return
+       */
+      public static final Intent newIntent(double lat, double lon) {
+        Intent intent = new Intent(NAME);
+        intent.putExtra(EXTRA_LATITUDE, lat);
+        intent.putExtra(EXTRA_LONGITUDE, lon);
+
+        return intent;
+      }
+
+      /**
+       * 
+       * @return
+       */
+      public static final IntentFilter newIntentFilter() {
+        return new IntentFilter(NAME);
+      }
+
+      // Suppress default constructor for noninstantiability.
+      private NewLocation() {
+
+      }
+    }
+
+    /**
+     * 
+     * @author
+     * 
+     */
+    public static final class NewSnr {
+      /**
+       * 
+       */
+      public static final String EXTRA_SNR = "fr.utc.nf33.ins.SNR";
+
+      /**
+       * 
+       */
+      public static final String NAME = "NEW_SNR";
+
+      /**
+       * 
+       * @param snr
+       * @return
+       */
+      public static final Intent newIntent(float snr) {
+        Intent intent = new Intent(NAME);
+        intent.putExtra(EXTRA_SNR, snr);
+
+        return intent;
+      }
+
+      /**
+       * 
+       * @return
+       */
+      public static final IntentFilter newIntentFilter() {
+        return new IntentFilter(NAME);
+      }
+
+      // Suppress default constructor for noninstantiability.
+      private NewSnr() {
+
+      }
+    }
+
+    /**
+     * 
+     * @author
+     * 
+     */
+    public static final class Transition {
+      /**
+       * 
+       */
+      public static final String EXTRA_NEW_STATE = "fr.utc.nf33.ins.NEW_STATE";
+
+      /**
+       * 
+       */
+      public static final String NAME = "TRANSITION";
+
+      /**
+       * 
+       * @param newState
+       * @return
+       */
+      public static final Intent newIntent(String newState) {
+        Intent intent = new Intent(NAME);
+        intent.putExtra(EXTRA_NEW_STATE, newState);
+
+        return intent;
+      }
+
+      /**
+       * 
+       * @return
+       */
+      public static final IntentFilter newIntentFilter() {
+        return new IntentFilter(NAME);
+      }
+
+      // Suppress default constructor for noninstantiability.
+      private Transition() {
+
+      }
+    }
+
+    // Suppress default constructor for noninstantiability.
+    private PrivateIntent() {
+
+    }
+  }
+
+  //
+  private BestLocationProvider bestLocationProvider;
+
+  // Binder given to clients.
+  private IBinder binder;
+
+  //
+  private GpsStatusListener gpsStatusListener;
+
+  //
+  private LocationManager locationManager;
+
+  //
+  private State state;
+
+  /**
+   * 
+   * @return
+   */
+  public BestLocationProvider getBestLocationProvider() {
+    return bestLocationProvider;
+  }
+
+  @Override
+  public IBinder onBind(Intent intent) {
+    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    bestLocationProvider = new BestLocationProvider();
+    gpsStatusListener = new GpsStatusListener();
+    locationManager.addGpsStatusListener(gpsStatusListener);
+
+    return binder;
+  }
+
+  @Override
+  public void onCreate() {
+    binder = new LocalBinder();
+    state = State.OUTDOOR;
+  }
+
+  @Override
+  public boolean onUnbind(Intent intent) {
+    locationManager.removeGpsStatusListener(gpsStatusListener);
+
+    return super.onUnbind(intent);
   }
 }

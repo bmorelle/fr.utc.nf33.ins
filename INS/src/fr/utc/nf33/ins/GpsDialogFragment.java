@@ -21,10 +21,15 @@ public class GpsDialogFragment extends DialogFragment {
    * to query it.
    */
   public interface GpsDialogListener {
-    public void onGpsDialogPositiveClick(DialogFragment dialog);
-
     public void onGpsDialogCancel(DialogFragment dialog);
+
+    public void onGpsDialogPositiveClick(DialogFragment dialog);
   }
+
+  /**
+   * 
+   */
+  public static final String NAME = "GpsDialogFragment";
 
   // Use this instance of the interface to deliver action events.
   private GpsDialogListener listener;
