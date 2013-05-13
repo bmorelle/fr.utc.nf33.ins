@@ -15,7 +15,7 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.LocationSource;
 
-public class LocationUpdater extends Service {
+public class LocationService extends Service {
 
   // Binder given to clients
   private final IBinder mBinder = new LocalBinder();
@@ -25,9 +25,9 @@ public class LocationUpdater extends Service {
    * runs in the same process as its clients, we don't need to deal with IPC.
    */
   public class LocalBinder extends Binder {
-    LocationUpdater getService() {
+    LocationService getService() {
       // Return this instance of LocationUpdater so clients can call public methods
-      return LocationUpdater.this;
+      return LocationService.this;
     }
   }
 

@@ -30,7 +30,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="fr.utc.nf33.ins.MainActivity"
+            android:name="fr.utc.nf33.ins.OutdoorActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance" >
@@ -43,7 +43,7 @@
         <activity
         android:name="fr.utc.nf33.ins.IndoorActivity"
         android:label="@string/app_name"
-        android:parentActivityName="fr.utc.nf33.ins.MainActivity"
+        android:parentActivityName="fr.utc.nf33.ins.OutdoorActivity"
         android:screenOrientation="portrait"
         android:launchMode="singleInstance" >
         <meta-data
@@ -52,7 +52,7 @@
     </activity>
         
         <service 
-            android:name="fr.utc.nf33.ins.LocationUpdater"
+            android:name="fr.utc.nf33.ins.LocationService"
             android:enabled="true"
             android:exported="false" >
         </service>

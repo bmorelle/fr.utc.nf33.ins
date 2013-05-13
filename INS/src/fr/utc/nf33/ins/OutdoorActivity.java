@@ -27,11 +27,11 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import fr.utc.nf33.ins.LocationUpdater.LocalBinder;
+import fr.utc.nf33.ins.LocationService.LocalBinder;
 import fr.utc.nf33.ins.db.InsContract;
 import fr.utc.nf33.ins.db.InsDbHelper;
 
-public final class MainActivity extends FragmentActivity
+public final class OutdoorActivity extends FragmentActivity
 implements
 GpsDialogFragment.GpsDialogListener {
   //
@@ -49,7 +49,7 @@ GpsDialogFragment.GpsDialogListener {
 
   private SupportMapFragment mapFragment;
 
-  private LocationUpdater mService;
+  private LocationService mService;
 
   private boolean mBound = false;
 
@@ -98,7 +98,7 @@ GpsDialogFragment.GpsDialogListener {
     }
 
     // Bind to the Service
-    Intent intent = new Intent(this, LocationUpdater.class);
+    Intent intent = new Intent(this, LocationService.class);
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Setup the map.
@@ -175,9 +175,9 @@ GpsDialogFragment.GpsDialogListener {
   private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
-      int newSituation = intent.getIntExtra("situation", LocationUpdater.OUTDOOR);
-      if(newSituation == LocationUpdater.INDOOR) {
-        Intent newIntent = new Intent(MainActivity.this, IndoorActivity.class);
+      int newSituation = intent.getIntExtra("situation", LocationService.OUTDOOR);
+      if(newSituation == LocationService.INDOOR) {
+        Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
         startActivity(newIntent);
       }
     }
@@ -187,7 +187,7 @@ GpsDialogFragment.GpsDialogListener {
     @Override
     public void onReceive(Context context, Intent intent) {
       float snr = intent.getFloatExtra("snr", 0);
-      ((TextView) MainActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
+      ((TextView) OutdoorActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
           + Float.toString(snr));
     }
   };

@@ -12,11 +12,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
-import fr.utc.nf33.ins.LocationUpdater.LocalBinder;
+import fr.utc.nf33.ins.LocationService.LocalBinder;
 
 public class IndoorActivity extends Activity {
   
-  private LocationUpdater mService;
+  private LocationService mService;
 
   private boolean mBound = false;
   
@@ -27,7 +27,7 @@ public class IndoorActivity extends Activity {
       setContentView(R.layout.activity_indoor);
       
       // Bind to the Service
-      Intent intent = new Intent(this, LocationUpdater.class);
+      Intent intent = new Intent(this, LocationService.class);
       bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
   }
   
@@ -64,9 +64,9 @@ public class IndoorActivity extends Activity {
   private BroadcastReceiver mTransitionBroadcast = new BroadcastReceiver() {
     @Override
     public void onReceive(Context context, Intent intent) {
-      int newSituation = intent.getIntExtra("situation", LocationUpdater.OUTDOOR);
-      if (newSituation == LocationUpdater.OUTDOOR) {
-        Intent newIntent = new Intent(IndoorActivity.this, MainActivity.class);
+      int newSituation = intent.getIntExtra("situation", LocationService.OUTDOOR);
+      if (newSituation == LocationService.OUTDOOR) {
+        Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
         startActivity(newIntent);
       }
     }
