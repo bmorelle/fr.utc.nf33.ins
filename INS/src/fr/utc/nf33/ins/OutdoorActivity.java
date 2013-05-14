@@ -174,8 +174,10 @@ public final class OutdoorActivity extends FragmentActivity
             Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
             startActivity(newIntent);
             break;
-          default:
+          case OUTDOOR:
             break;
+          default:
+            throw new IllegalStateException("Unhandled Application State.");
         }
       }
     };

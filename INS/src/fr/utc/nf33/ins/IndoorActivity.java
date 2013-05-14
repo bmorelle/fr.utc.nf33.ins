@@ -80,8 +80,10 @@ public class IndoorActivity extends Activity {
             Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
             startActivity(newIntent);
             break;
-          default:
+          case INDOOR:
             break;
+          default:
+            throw new IllegalStateException("Unhandled Application State.");
         }
       }
     };
