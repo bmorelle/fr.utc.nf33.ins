@@ -102,7 +102,10 @@ public class IndoorActivity extends Activity {
 
     // Unregister receivers.
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
+    newSnrReceiver = null;
     LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
+    transitionReceiver = null;
+    connection = null;
 
     super.onStop();
   }

@@ -41,7 +41,10 @@ public final class OutdoorActivity extends FragmentActivity
     implements
       GpsDialogFragment.GpsDialogListener {
   //
+  private static final float DEFAULT_ZOOM_LEVEL = 17.0F;
+  //
   private static final GoogleMapOptions GOOGLE_MAP_OPTIONS = new GoogleMapOptions();
+
   static {
     GOOGLE_MAP_OPTIONS.compassEnabled(false);
     GOOGLE_MAP_OPTIONS.mapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -143,6 +146,7 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onServiceDisconnected(ComponentName arg0) {
         bound = false;
+        locationService = null;
       }
     };
     bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
@@ -156,7 +160,7 @@ public final class OutdoorActivity extends FragmentActivity
         double lon =
             intent.getDoubleExtra(LocationService.PrivateIntent.NewLocation.EXTRA_LONGITUDE, 0);
         mapFragment.getMap().animateCamera(
-            CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), (float) 17.0));
+            CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), DEFAULT_ZOOM_LEVEL));
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(newLocationReceiver,
@@ -212,12 +216,20 @@ public final class OutdoorActivity extends FragmentActivity
     if (bound) {
       unbindService(connection);
       bound = false;
+      locationService = null;
     }
 
     // Unregister receivers.
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newLocationReceiver);
+    newLocationReceiver = null;
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
+    newSnrReceiver = null;
     LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
+    transitionReceiver = null;
+    connection = null;
+
+    //
+    locationManager = null;
 
     super.onStop();
   }

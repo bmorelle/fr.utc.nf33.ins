@@ -57,7 +57,7 @@ public class LocationService extends Service {
 
     @Override
     public void deactivate() {
-      locationManager.removeUpdates(this);
+
     }
 
     /**
@@ -138,7 +138,6 @@ public class LocationService extends Service {
     public void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
-
   }
 
   //
@@ -355,9 +354,6 @@ public class LocationService extends Service {
   //
   private BestLocationProvider bestLocationProvider;
 
-  // Binder given to clients.
-  private IBinder binder;
-
   //
   private GpsStatusListener gpsStatusListener;
 
@@ -379,21 +375,23 @@ public class LocationService extends Service {
   public IBinder onBind(Intent intent) {
     locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     bestLocationProvider = new BestLocationProvider();
-    gpsStatusListener = new GpsStatusListener();
-    locationManager.addGpsStatusListener(gpsStatusListener);
+    locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
 
-    return binder;
+    return new LocalBinder(); // Binder given to clients.
   }
 
   @Override
   public void onCreate() {
-    binder = new LocalBinder();
     state = State.OUTDOOR;
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
+    locationManager.removeUpdates(bestLocationProvider);
+    bestLocationProvider = null;
     locationManager.removeGpsStatusListener(gpsStatusListener);
+    gpsStatusListener = null;
+    locationManager = null;
 
     return super.onUnbind(intent);
   }
