@@ -69,7 +69,7 @@ public class EntryPointsActivity extends FragmentActivity
     return new DbCursorLoader(this) {
       @Override
       public Cursor newCursor() {
-        return dbHelper.getReadableDatabase().rawQuery("SELECT name FROM Building", null);
+        return dbHelper.getReadableDatabase().rawQuery("SELECT * FROM Building", null);
       }
     };
   }

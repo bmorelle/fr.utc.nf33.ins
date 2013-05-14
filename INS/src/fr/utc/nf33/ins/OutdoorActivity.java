@@ -8,8 +8,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -18,7 +16,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.TextView;
@@ -30,8 +27,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import fr.utc.nf33.ins.LocationService.LocalBinder;
-import fr.utc.nf33.ins.db.InsContract;
-import fr.utc.nf33.ins.db.InsDbHelper;
 
 /**
  * 
@@ -190,23 +185,6 @@ public final class OutdoorActivity extends FragmentActivity
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
         LocationService.PrivateIntent.Transition.newIntentFilter());
-
-    // TODO: remove dataBase stuff.
-    SQLiteDatabase db = new InsDbHelper(this).getReadableDatabase();
-    Cursor c =
-        db.rawQuery(
-            "SELECT * FROM Building b INNER JOIN EntryPoint ep ON b.idBuilding = ep.Building_idBuilding",
-            null);
-    while (c.moveToNext()) {
-      double latitude =
-          c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LATITUDE));
-      double longitude =
-          c.getDouble(c.getColumnIndexOrThrow(InsContract.EntryPoint.COLUMN_NAME_LONGITUDE));
-      StringBuilder sb = new StringBuilder();
-      sb.append("Entry Point at (").append(latitude).append(", ").append(longitude).append(")");
-      Log.d("MainActivity", sb.toString());
-    }
-    db.close();
   }
 
   @Override
