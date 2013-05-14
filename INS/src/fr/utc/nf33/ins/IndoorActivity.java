@@ -51,12 +51,12 @@ public class IndoorActivity extends Activity {
     // Connect to the Location Service.
     connection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName className, IBinder service) {
+      public void onServiceConnected(ComponentName name, IBinder service) {
         bound = true;
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName arg0) {
+      public void onServiceDisconnected(ComponentName name) {
         bound = false;
       }
     };

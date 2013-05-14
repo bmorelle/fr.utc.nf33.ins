@@ -64,9 +64,6 @@ public final class OutdoorActivity extends FragmentActivity
   private LocationManager locationManager;
 
   //
-  private LocationService locationService;
-
-  //
   private SupportMapFragment mapFragment;
 
   //
@@ -136,17 +133,16 @@ public final class OutdoorActivity extends FragmentActivity
     // Connect to the Location Service.
     connection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName className, IBinder service) {
+      public void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to LocationService, cast the IBinder and get LocationService instance.
         bound = true;
-        locationService = ((LocalBinder) service).getService();
-        mapFragment.getMap().setLocationSource(locationService.getBestLocationProvider());
+        mapFragment.getMap().setLocationSource(
+            ((LocalBinder) service).getService().getBestLocationProvider());
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName arg0) {
+      public void onServiceDisconnected(ComponentName name) {
         bound = false;
-        locationService = null;
       }
     };
     bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
@@ -220,7 +216,6 @@ public final class OutdoorActivity extends FragmentActivity
     if (bound) {
       unbindService(connection);
       bound = false;
-      locationService = null;
     }
 
     // Unregister receivers.
