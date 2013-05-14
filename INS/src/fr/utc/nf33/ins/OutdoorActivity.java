@@ -183,9 +183,13 @@ public final class OutdoorActivity extends FragmentActivity
         State newState =
             State.valueOf(intent
                 .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
-        if (newState == State.INDOOR) {
-          Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
-          startActivity(newIntent);
+        switch (newState) {
+          case INDOOR:
+            Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
+            startActivity(newIntent);
+            break;
+          default:
+            break;
         }
       }
     };

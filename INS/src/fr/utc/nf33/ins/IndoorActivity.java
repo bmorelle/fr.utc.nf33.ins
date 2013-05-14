@@ -80,9 +80,13 @@ public class IndoorActivity extends Activity {
         State newState =
             State.valueOf(intent
                 .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
-        if (newState == State.OUTDOOR) {
-          Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
-          startActivity(newIntent);
+        switch (newState) {
+          case OUTDOOR:
+            Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
+            startActivity(newIntent);
+            break;
+          default:
+            break;
         }
       }
     };
