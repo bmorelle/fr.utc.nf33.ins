@@ -75,7 +75,7 @@ public final class OutdoorActivity extends FragmentActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
+    setContentView(R.layout.activity_outdoor);
 
     // Create a Google Map Fragment with desired options.
     mapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
