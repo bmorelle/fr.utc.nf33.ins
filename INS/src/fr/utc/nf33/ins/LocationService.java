@@ -28,11 +28,11 @@ public class LocationService extends Service {
   //
   private final class BestLocationProvider implements LocationSource, LocationListener {
     //
-    private static final float GPS_MIN_DISTANCE = 10;
+    private static final float GPS_MIN_DISTANCE = 10F;
     //
     private static final short GPS_MIN_TIME = 3000;
     //
-    private static final float NETWORK_MIN_DISTANCE = 0;
+    private static final float NETWORK_MIN_DISTANCE = 0F;
     //
     private static final short NETWORK_MIN_TIME = 30000;
     //
@@ -143,7 +143,7 @@ public class LocationService extends Service {
   //
   private final class GpsStatusListener implements GpsStatus.Listener {
     //
-    private float averageSnr = 0;
+    private float averageSnr = 0F;
 
     //
     private boolean firstFix = false;
