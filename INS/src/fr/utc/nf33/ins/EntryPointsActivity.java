@@ -11,6 +11,7 @@ import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.widget.ListView;
+import fr.utc.nf33.ins.db.DbCursorLoader;
 import fr.utc.nf33.ins.db.InsContract;
 import fr.utc.nf33.ins.db.InsDbHelper;
 
@@ -22,7 +23,7 @@ import fr.utc.nf33.ins.db.InsDbHelper;
 public class EntryPointsActivity extends FragmentActivity
     implements
       LoaderManager.LoaderCallbacks<Cursor> {
-  //
+  // This is the Adapter being used to display the list's data.
   private CursorAdapter cursorAdapter;
 
   //
@@ -62,18 +63,31 @@ public class EntryPointsActivity extends FragmentActivity
     dbHelper.close();
   }
 
+  // Called when a new Loader needs to be created.
   @Override
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    return null;
+    return new DbCursorLoader(this) {
+      @Override
+      public Cursor newCursor() {
+        return dbHelper.getReadableDatabase().rawQuery("SELECT name FROM Building", null);
+      }
+    };
   }
 
+  // Called when a previously created loader is reset, making the data unavailable.
   @Override
   public void onLoaderReset(Loader<Cursor> loader) {
+    // This is called when the last Cursor provided to onLoadFinished()
+    // above is about to be closed. We need to make sure we are no
+    // longer using it.
     cursorAdapter.swapCursor(null);
   }
 
+  // Called when a previously created loader has finished loading.
   @Override
   public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    // Swap the new cursor in. (The framework will take care of closing the
+    // old cursor once we return.)
     cursorAdapter.swapCursor(data);
   }
 }
