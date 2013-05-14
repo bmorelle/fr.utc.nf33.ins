@@ -8,7 +8,7 @@
         android:id="@+id/indoorText"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="8"
+        android:layout_weight="9"
         android:textIsSelectable="false"
         android:text="@string/indoor_text" />
     <TextView
