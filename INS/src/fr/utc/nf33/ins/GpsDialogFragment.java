@@ -21,8 +21,10 @@ public class GpsDialogFragment extends DialogFragment {
    * to query it.
    */
   public interface GpsDialogListener {
-    public void onGpsDialogCancel(DialogFragment dialog);
-
+    /**
+     * 
+     * @param dialog
+     */
     public void onGpsDialogPositiveClick(DialogFragment dialog);
   }
 
@@ -34,6 +36,15 @@ public class GpsDialogFragment extends DialogFragment {
   // Use this instance of the interface to deliver action events.
   private GpsDialogListener listener;
 
+  /**
+   * 
+   */
+  public GpsDialogFragment() {
+    super();
+
+    setCancelable(false);
+  }
+
   // Override the Fragment.onAttach() method to instantiate the GpsDialogListener.
   @Override
   public void onAttach(Activity activity) {
@@ -44,7 +55,7 @@ public class GpsDialogFragment extends DialogFragment {
       // Instantiate the GpsDialogListener so we can send events to the host.
       listener = (GpsDialogListener) activity;
     } catch (ClassCastException e) {
-      Log.d("GPSDialogFragment", "OnAttach");
+      Log.d(NAME, "OnAttach");
       // The activity doesn't implement the interface, throw exception.
       throw new ClassCastException(activity.toString() + " must implement GpsDialogListener.");
     }
@@ -59,11 +70,6 @@ public class GpsDialogFragment extends DialogFragment {
           @Override
           public void onClick(DialogInterface dialog, int id) {
             listener.onGpsDialogPositiveClick(GpsDialogFragment.this);
-          }
-        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
-          @Override
-          public void onCancel(DialogInterface dialog) {
-            listener.onGpsDialogCancel(GpsDialogFragment.this);
           }
         });
     return builder.create();

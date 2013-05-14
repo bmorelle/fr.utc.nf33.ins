@@ -221,6 +221,11 @@ public class LocationService extends Service {
       /**
        * 
        */
+      public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_LOCATION";
+
+      /**
+       * 
+       */
       public static final String EXTRA_LATITUDE = "fr.utc.nf33.ins.LATITUDE";
 
       /**
@@ -230,17 +235,12 @@ public class LocationService extends Service {
 
       /**
        * 
-       */
-      public static final String NAME = "NEW_LOCATION";
-
-      /**
-       * 
        * @param lat
        * @param lon
        * @return
        */
       public static final Intent newIntent(double lat, double lon) {
-        Intent intent = new Intent(NAME);
+        Intent intent = new Intent(ACTION_NAME);
         intent.putExtra(EXTRA_LATITUDE, lat);
         intent.putExtra(EXTRA_LONGITUDE, lon);
 
@@ -252,7 +252,7 @@ public class LocationService extends Service {
        * @return
        */
       public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(NAME);
+        return new IntentFilter(ACTION_NAME);
       }
 
       // Suppress default constructor for noninstantiability.
@@ -270,12 +270,12 @@ public class LocationService extends Service {
       /**
        * 
        */
-      public static final String EXTRA_SNR = "fr.utc.nf33.ins.SNR";
+      public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_SNR";
 
       /**
        * 
        */
-      public static final String NAME = "NEW_SNR";
+      public static final String EXTRA_SNR = "fr.utc.nf33.ins.SNR";
 
       /**
        * 
@@ -283,7 +283,7 @@ public class LocationService extends Service {
        * @return
        */
       public static final Intent newIntent(float snr) {
-        Intent intent = new Intent(NAME);
+        Intent intent = new Intent(ACTION_NAME);
         intent.putExtra(EXTRA_SNR, snr);
 
         return intent;
@@ -294,7 +294,7 @@ public class LocationService extends Service {
        * @return
        */
       public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(NAME);
+        return new IntentFilter(ACTION_NAME);
       }
 
       // Suppress default constructor for noninstantiability.
@@ -312,12 +312,12 @@ public class LocationService extends Service {
       /**
        * 
        */
-      public static final String EXTRA_NEW_STATE = "fr.utc.nf33.ins.NEW_STATE";
+      public static final String ACTION_NAME = "fr.utc.nf33.ins.TRANSITION";
 
       /**
        * 
        */
-      public static final String NAME = "TRANSITION";
+      public static final String EXTRA_NEW_STATE = "fr.utc.nf33.ins.NEW_STATE";
 
       /**
        * 
@@ -325,7 +325,7 @@ public class LocationService extends Service {
        * @return
        */
       public static final Intent newIntent(String newState) {
-        Intent intent = new Intent(NAME);
+        Intent intent = new Intent(ACTION_NAME);
         intent.putExtra(EXTRA_NEW_STATE, newState);
 
         return intent;
@@ -336,7 +336,7 @@ public class LocationService extends Service {
        * @return
        */
       public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(NAME);
+        return new IntentFilter(ACTION_NAME);
       }
 
       // Suppress default constructor for noninstantiability.
@@ -358,6 +358,9 @@ public class LocationService extends Service {
   private GpsStatusListener gpsStatusListener;
 
   //
+  private State initialState;
+
+  //
   private LocationManager locationManager;
 
   //
@@ -374,25 +377,48 @@ public class LocationService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    bestLocationProvider = new BestLocationProvider();
-    locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+
+    state =
+        initialState =
+            State.valueOf(intent.getStringExtra(PrivateIntent.Transition.EXTRA_NEW_STATE));
+    switch (state) {
+      case INDOOR:
+        locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+        break;
+      case OUTDOOR:
+        bestLocationProvider = new BestLocationProvider();
+        locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+        break;
+      default:
+        throw new IllegalStateException("Unhandled Application State.");
+    }
 
     return new LocalBinder(); // Binder given to clients.
   }
 
   @Override
   public void onCreate() {
-    state = State.OUTDOOR;
+
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
-    locationManager.removeUpdates(bestLocationProvider);
-    bestLocationProvider = null;
-    locationManager.removeGpsStatusListener(gpsStatusListener);
+    switch (initialState) {
+      case INDOOR:
+        locationManager.removeGpsStatusListener(gpsStatusListener);
+        break;
+      case OUTDOOR:
+        locationManager.removeUpdates(bestLocationProvider);
+        bestLocationProvider = null;
+        locationManager.removeGpsStatusListener(gpsStatusListener);
+        break;
+      default:
+        throw new IllegalStateException("Unhandled Application State.");
+    }
+
     gpsStatusListener = null;
     locationManager = null;
 
-    return super.onUnbind(intent);
+    return false;
   }
 }

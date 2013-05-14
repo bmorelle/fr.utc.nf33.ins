@@ -95,11 +95,6 @@ public final class OutdoorActivity extends FragmentActivity
   }
 
   @Override
-  public void onGpsDialogCancel(DialogFragment dialog) {
-    finish();
-  }
-
-  @Override
   public void onGpsDialogPositiveClick(DialogFragment dialog) {
     Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
     startActivity(settingsIntent);
@@ -121,6 +116,9 @@ public final class OutdoorActivity extends FragmentActivity
     map.setMyLocationEnabled(true);
 
     // Connect to the Location Service.
+    Intent intent = new Intent(this, LocationService.class);
+    intent.putExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE,
+        State.OUTDOOR.toString());
     connection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -135,7 +133,7 @@ public final class OutdoorActivity extends FragmentActivity
         bound = false;
       }
     };
-    bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
+    bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     newLocationReceiver = new BroadcastReceiver() {

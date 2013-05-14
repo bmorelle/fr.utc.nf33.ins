@@ -44,6 +44,9 @@ public class IndoorActivity extends Activity {
   @Override
   protected void onStart() {
     // Connect to the Location Service.
+    Intent intent = new Intent(this, LocationService.class);
+    intent.putExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE,
+        State.INDOOR.toString());
     connection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -55,7 +58,7 @@ public class IndoorActivity extends Activity {
         bound = false;
       }
     };
-    bindService(new Intent(this, LocationService.class), connection, Context.BIND_AUTO_CREATE);
+    bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     newSnrReceiver = new BroadcastReceiver() {
