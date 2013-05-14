@@ -215,9 +215,9 @@ public final class OutdoorActivity extends FragmentActivity
     }
 
     // Unregister receivers.
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newLocationReceiver);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
 
     super.onStop();
   }
