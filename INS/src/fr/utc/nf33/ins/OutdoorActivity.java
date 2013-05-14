@@ -61,9 +61,6 @@ public final class OutdoorActivity extends FragmentActivity
   private ServiceConnection connection;
 
   //
-  private LocationManager locationManager;
-
-  //
   private SupportMapFragment mapFragment;
 
   //
@@ -74,11 +71,6 @@ public final class OutdoorActivity extends FragmentActivity
 
   //
   private BroadcastReceiver transitionReceiver;
-
-  @Override
-  public void onBackPressed() {
-    finish();
-  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -117,11 +109,9 @@ public final class OutdoorActivity extends FragmentActivity
   protected void onStart() {
     super.onStart();
 
-    // Get the Location Manager.
-    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
     // Check whether the GPS provider is enabled.
-    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+    if (!((LocationManager) getSystemService(Context.LOCATION_SERVICE))
+        .isProviderEnabled(LocationManager.GPS_PROVIDER)) {
       DialogFragment dialog = new GpsDialogFragment();
       dialog.show(getSupportFragmentManager(), GpsDialogFragment.NAME);
     }
@@ -226,9 +216,6 @@ public final class OutdoorActivity extends FragmentActivity
     LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
     transitionReceiver = null;
     connection = null;
-
-    //
-    locationManager = null;
 
     super.onStop();
   }
