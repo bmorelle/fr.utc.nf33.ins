@@ -80,8 +80,7 @@ public class IndoorActivity extends Activity {
                 .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
         switch (newState) {
           case OUTDOOR:
-            Intent newIntent = new Intent(IndoorActivity.this, OutdoorActivity.class);
-            startActivity(newIntent);
+            startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));
             break;
           case INDOOR:
             break;

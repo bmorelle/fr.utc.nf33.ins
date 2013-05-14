@@ -20,6 +20,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -71,6 +72,15 @@ public final class OutdoorActivity extends FragmentActivity
 
   //
   private BroadcastReceiver transitionReceiver;
+
+  /**
+   * Called when the user clicks the Entry Points button.
+   * 
+   * @param view
+   */
+  public void onButtonEntryPointsClick(View view) {
+    startActivity(new Intent(this, EntryPointsActivity.class));
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -154,8 +164,8 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationService.PrivateIntent.NewSnr.EXTRA_SNR, 0);
-        ((TextView) OutdoorActivity.this.findViewById(R.id.bottom)).setText("SNR (3 premiers): "
-            + Float.toString(snr));
+        ((TextView) OutdoorActivity.this.findViewById(R.id.outdoorSNR))
+            .setText("SNR (3 premiers): " + Float.toString(snr));
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
@@ -169,8 +179,7 @@ public final class OutdoorActivity extends FragmentActivity
                 .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
         switch (newState) {
           case INDOOR:
-            Intent newIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
-            startActivity(newIntent);
+            startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
             break;
           case OUTDOOR:
             break;

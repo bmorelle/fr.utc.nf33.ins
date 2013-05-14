@@ -6,14 +6,23 @@
 
     <FrameLayout
         android:id="@+id/map_fragment_container"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight="9" />
+        android:layout_weight="8" />
+
     <TextView
-        android:id="@+id/bottom"
+        android:id="@+id/outdoorSNR"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:textIsSelectable="false" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_gravity="right"
+        android:layout_weight="1"
+        android:onClick="onButtonEntryPointsClick"
+        android:text="@string/button_entry_points" />
 
 </LinearLayout>
