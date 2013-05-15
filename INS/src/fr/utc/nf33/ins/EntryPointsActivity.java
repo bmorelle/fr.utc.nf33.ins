@@ -68,7 +68,7 @@ public class EntryPointsActivity extends FragmentActivity
   public Loader<Cursor> onCreateLoader(int id, Bundle args) {
     return new DbCursorLoader(this) {
       @Override
-      public Cursor newCursor() {
+      public Cursor getCursor() {
         return dbHelper.getReadableDatabase().rawQuery("SELECT * FROM Building", null);
       }
     };

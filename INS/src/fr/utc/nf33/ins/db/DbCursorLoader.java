@@ -51,10 +51,16 @@ public abstract class DbCursorLoader extends AsyncTaskLoader<Cursor> {
     }
   }
 
+  /**
+   * 
+   * @return
+   */
+  protected abstract Cursor getCursor();
+
   /* Runs on a worker thread */
   @Override
   public Cursor loadInBackground() {
-    Cursor cursor = newCursor();
+    Cursor cursor = getCursor();
     if (cursor != null) {
       // Ensure the cursor window is filled
       cursor.getCount();
@@ -62,12 +68,6 @@ public abstract class DbCursorLoader extends AsyncTaskLoader<Cursor> {
     }
     return cursor;
   }
-
-  /**
-   * 
-   * @return
-   */
-  public abstract Cursor newCursor();
 
   @Override
   public void onCanceled(Cursor cursor) {
