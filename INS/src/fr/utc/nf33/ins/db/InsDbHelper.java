@@ -4,6 +4,7 @@
 package fr.utc.nf33.ins.db;
 
 import android.content.Context;
+import android.database.Cursor;
 
 import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 
@@ -26,5 +27,13 @@ public class InsDbHelper extends SQLiteAssetHelper {
     super(context, DATABASE_NAME, null, DATABASE_VERSION);
 
     setForcedUpgradeVersion(DATABASE_VERSION);
+  }
+
+  /**
+   * 
+   * @return
+   */
+  public final Cursor getBuildings() {
+    return getReadableDatabase().rawQuery("SELECT idBuilding AS _id, name FROM Building", null);
   }
 }

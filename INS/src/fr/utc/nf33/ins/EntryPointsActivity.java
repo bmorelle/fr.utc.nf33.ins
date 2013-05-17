@@ -35,9 +35,7 @@ public class EntryPointsActivity extends FragmentActivity {
     //
     mListView = (ListView) findViewById(R.id.entry_points_list);
     mDbHelper = new InsDbHelper(this);
-    mCursor =
-        mDbHelper.getReadableDatabase().rawQuery("SELECT idBuilding AS _id, name FROM Building",
-            null);
+    mCursor = mDbHelper.getBuildings();
 
     // For the cursor adapter, specify which columns go into which views.
     String[] fromColumns = {InsContract.Building.COLUMN_NAME_NAME};
