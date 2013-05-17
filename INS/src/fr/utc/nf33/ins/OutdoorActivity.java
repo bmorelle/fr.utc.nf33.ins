@@ -19,6 +19,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -174,7 +175,8 @@ public final class OutdoorActivity extends FragmentActivity
                 .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
         switch (newState) {
           case INDOOR:
-            startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+            // startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+            Toast.makeText(OutdoorActivity.this, "indoor", Toast.LENGTH_SHORT).show();
             break;
           case OUTDOOR:
             break;
