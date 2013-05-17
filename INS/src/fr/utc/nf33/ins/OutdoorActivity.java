@@ -200,9 +200,4 @@ public final class OutdoorActivity extends FragmentActivity
 
     super.onStop();
   }
-
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-  }
 }
