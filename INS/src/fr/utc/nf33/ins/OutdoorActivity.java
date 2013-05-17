@@ -27,7 +27,9 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import fr.utc.nf33.ins.LocationService.LocalBinder;
+import fr.utc.nf33.ins.location.LocationService;
+import fr.utc.nf33.ins.location.LocationService.LocalBinder;
+import fr.utc.nf33.ins.location.State;
 
 /**
  * 
@@ -207,5 +209,10 @@ public final class OutdoorActivity extends FragmentActivity
     connection = null;
 
     super.onStop();
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
   }
 }

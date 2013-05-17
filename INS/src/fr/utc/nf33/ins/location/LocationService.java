@@ -1,7 +1,7 @@
 /**
  * 
  */
-package fr.utc.nf33.ins;
+package fr.utc.nf33.ins.location;
 
 import android.app.Service;
 import android.content.Context;
@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.LocationSource;
+
 
 /**
  * 
@@ -200,7 +201,7 @@ public class LocationService extends Service {
    * as its clients, we don't need to deal with IPC.
    */
   public class LocalBinder extends Binder {
-    LocationService getService() {
+    public LocationService getService() {
       // Return this instance of LocationService so that clients can call public methods.
       return LocationService.this;
     }

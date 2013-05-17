@@ -1,7 +1,7 @@
 /**
  * 
  */
-package fr.utc.nf33.ins;
+package fr.utc.nf33.ins.location;
 
 /**
  * 

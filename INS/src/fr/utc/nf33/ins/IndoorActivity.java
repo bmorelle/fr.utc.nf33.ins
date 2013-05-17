@@ -3,6 +3,8 @@
  */
 package fr.utc.nf33.ins;
 
+import fr.utc.nf33.ins.location.LocationService;
+import fr.utc.nf33.ins.location.State;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;

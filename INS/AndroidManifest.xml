@@ -61,7 +61,7 @@
         </activity>
 
         <service
-            android:name="fr.utc.nf33.ins.LocationService"
+            android:name="fr.utc.nf33.ins.location.LocationService"
             android:enabled="true"
             android:exported="false" >
         </service>
