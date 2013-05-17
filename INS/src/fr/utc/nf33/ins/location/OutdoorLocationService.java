@@ -64,7 +64,7 @@ public class OutdoorLocationService extends Service {
      * @param location the new Location that you want to evaluate.
      * @return true when the new Location is better than the current one, false otherwise.
      */
-    protected boolean isBetterLocation(Location location) {
+    private boolean isBetterLocation(Location location) {
       // A new location is always better than no location.
       if (mCurrentBestLocation == null) return true;
 
