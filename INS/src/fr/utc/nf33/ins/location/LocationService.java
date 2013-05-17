@@ -6,7 +6,6 @@ package fr.utc.nf33.ins.location;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -121,7 +120,7 @@ public class LocationService extends Service {
       listener.onLocationChanged(currentBestLocation);
 
       LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-          PrivateIntent.NewLocation.newIntent(currentBestLocation.getLatitude(),
+          LocationIntent.NewLocation.newIntent(currentBestLocation.getLatitude(),
               currentBestLocation.getLongitude()));
     }
 
@@ -181,16 +180,16 @@ public class LocationService extends Service {
         if (newAvgSnr != 0) averageSnr = newAvgSnr;
 
         LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-            PrivateIntent.NewSnr.newIntent(averageSnr));
+            LocationIntent.NewSnr.newIntent(averageSnr));
 
         if ((averageSnr < SNR_THRESHOLD) && (state != State.INDOOR)) {
           state = State.INDOOR;
           LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              PrivateIntent.Transition.newIntent(state.toString()));
+              LocationIntent.Transition.newIntent(state.toString()));
         } else if ((averageSnr >= SNR_THRESHOLD) && (state != State.OUTDOOR)) {
           state = State.OUTDOOR;
           LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              PrivateIntent.Transition.newIntent(state.toString()));
+              LocationIntent.Transition.newIntent(state.toString()));
         }
       }
     }
@@ -204,151 +203,6 @@ public class LocationService extends Service {
     public LocationService getService() {
       // Return this instance of LocationService so that clients can call public methods.
       return LocationService.this;
-    }
-  }
-
-  /**
-   * 
-   * @author
-   * 
-   */
-  public static final class PrivateIntent {
-    /**
-     * 
-     * @author
-     * 
-     */
-    public static final class NewLocation {
-      /**
-       * 
-       */
-      public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_LOCATION";
-
-      /**
-       * 
-       */
-      public static final String EXTRA_LATITUDE = "fr.utc.nf33.ins.LATITUDE";
-
-      /**
-       * 
-       */
-      public static final String EXTRA_LONGITUDE = "fr.utc.nf33.ins.LONGITUDE";
-
-      /**
-       * 
-       * @param lat
-       * @param lon
-       * @return
-       */
-      public static final Intent newIntent(double lat, double lon) {
-        Intent intent = new Intent(ACTION_NAME);
-        intent.putExtra(EXTRA_LATITUDE, lat);
-        intent.putExtra(EXTRA_LONGITUDE, lon);
-
-        return intent;
-      }
-
-      /**
-       * 
-       * @return
-       */
-      public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(ACTION_NAME);
-      }
-
-      // Suppress default constructor for noninstantiability.
-      private NewLocation() {
-
-      }
-    }
-
-    /**
-     * 
-     * @author
-     * 
-     */
-    public static final class NewSnr {
-      /**
-       * 
-       */
-      public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_SNR";
-
-      /**
-       * 
-       */
-      public static final String EXTRA_SNR = "fr.utc.nf33.ins.SNR";
-
-      /**
-       * 
-       * @param snr
-       * @return
-       */
-      public static final Intent newIntent(float snr) {
-        Intent intent = new Intent(ACTION_NAME);
-        intent.putExtra(EXTRA_SNR, snr);
-
-        return intent;
-      }
-
-      /**
-       * 
-       * @return
-       */
-      public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(ACTION_NAME);
-      }
-
-      // Suppress default constructor for noninstantiability.
-      private NewSnr() {
-
-      }
-    }
-
-    /**
-     * 
-     * @author
-     * 
-     */
-    public static final class Transition {
-      /**
-       * 
-       */
-      public static final String ACTION_NAME = "fr.utc.nf33.ins.TRANSITION";
-
-      /**
-       * 
-       */
-      public static final String EXTRA_NEW_STATE = "fr.utc.nf33.ins.NEW_STATE";
-
-      /**
-       * 
-       * @param newState
-       * @return
-       */
-      public static final Intent newIntent(String newState) {
-        Intent intent = new Intent(ACTION_NAME);
-        intent.putExtra(EXTRA_NEW_STATE, newState);
-
-        return intent;
-      }
-
-      /**
-       * 
-       * @return
-       */
-      public static final IntentFilter newIntentFilter() {
-        return new IntentFilter(ACTION_NAME);
-      }
-
-      // Suppress default constructor for noninstantiability.
-      private Transition() {
-
-      }
-    }
-
-    // Suppress default constructor for noninstantiability.
-    private PrivateIntent() {
-
     }
   }
 
@@ -381,7 +235,7 @@ public class LocationService extends Service {
 
     state =
         initialState =
-            State.valueOf(intent.getStringExtra(PrivateIntent.Transition.EXTRA_NEW_STATE));
+            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
     switch (state) {
       case INDOOR:
         locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());

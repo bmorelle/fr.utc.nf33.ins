@@ -3,8 +3,6 @@
  */
 package fr.utc.nf33.ins;
 
-import fr.utc.nf33.ins.location.LocationService;
-import fr.utc.nf33.ins.location.State;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -15,6 +13,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
+import fr.utc.nf33.ins.location.LocationIntent;
+import fr.utc.nf33.ins.location.LocationService;
+import fr.utc.nf33.ins.location.State;
 
 /**
  * 
@@ -41,8 +42,7 @@ public class IndoorActivity extends Activity {
   protected void onStart() {
     // Connect to the Location Service.
     Intent intent = new Intent(this, LocationService.class);
-    intent.putExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE,
-        State.INDOOR.toString());
+    intent.putExtra(LocationIntent.Transition.EXTRA_NEW_STATE, State.INDOOR.toString());
     connection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -60,20 +60,19 @@ public class IndoorActivity extends Activity {
     newSnrReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        float snr = intent.getFloatExtra(LocationService.PrivateIntent.NewSnr.EXTRA_SNR, 0);
+        float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
             + Float.toString(snr));
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
-        LocationService.PrivateIntent.NewSnr.newIntentFilter());
+        LocationIntent.NewSnr.newIntentFilter());
 
     transitionReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         State newState =
-            State.valueOf(intent
-                .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
+            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
         switch (newState) {
           case OUTDOOR:
             startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));
@@ -86,7 +85,7 @@ public class IndoorActivity extends Activity {
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
-        LocationService.PrivateIntent.Transition.newIntentFilter());
+        LocationIntent.Transition.newIntentFilter());
 
     super.onStart();
   }

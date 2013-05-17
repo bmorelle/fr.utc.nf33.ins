@@ -27,6 +27,7 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import fr.utc.nf33.ins.location.LocationIntent;
 import fr.utc.nf33.ins.location.LocationService;
 import fr.utc.nf33.ins.location.LocationService.LocalBinder;
 import fr.utc.nf33.ins.location.State;
@@ -119,8 +120,7 @@ public final class OutdoorActivity extends FragmentActivity
 
     // Connect to the Location Service.
     Intent intent = new Intent(this, LocationService.class);
-    intent.putExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE,
-        State.OUTDOOR.toString());
+    intent.putExtra(LocationIntent.Transition.EXTRA_NEW_STATE, State.OUTDOOR.toString());
     connection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -140,34 +140,31 @@ public final class OutdoorActivity extends FragmentActivity
     newLocationReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        double lat =
-            intent.getDoubleExtra(LocationService.PrivateIntent.NewLocation.EXTRA_LATITUDE, 0);
-        double lon =
-            intent.getDoubleExtra(LocationService.PrivateIntent.NewLocation.EXTRA_LONGITUDE, 0);
+        double lat = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LATITUDE, 0);
+        double lon = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LONGITUDE, 0);
         mapFragment.getMap().animateCamera(
             CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), DEFAULT_ZOOM_LEVEL));
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(newLocationReceiver,
-        LocationService.PrivateIntent.NewLocation.newIntentFilter());
+        LocationIntent.NewLocation.newIntentFilter());
 
     newSnrReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        float snr = intent.getFloatExtra(LocationService.PrivateIntent.NewSnr.EXTRA_SNR, 0);
+        float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) OutdoorActivity.this.findViewById(R.id.outdoorSNR))
             .setText("SNR (3 premiers): " + Float.toString(snr));
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
-        LocationService.PrivateIntent.NewSnr.newIntentFilter());
+        LocationIntent.NewSnr.newIntentFilter());
 
     transitionReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         State newState =
-            State.valueOf(intent
-                .getStringExtra(LocationService.PrivateIntent.Transition.EXTRA_NEW_STATE));
+            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
         switch (newState) {
           case INDOOR:
             // startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
@@ -181,7 +178,7 @@ public final class OutdoorActivity extends FragmentActivity
       }
     };
     LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
-        LocationService.PrivateIntent.Transition.newIntentFilter());
+        LocationIntent.Transition.newIntentFilter());
   }
 
   @Override
