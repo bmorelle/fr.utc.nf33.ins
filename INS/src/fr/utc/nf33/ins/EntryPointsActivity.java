@@ -19,13 +19,13 @@ import fr.utc.nf33.ins.db.InsDbHelper;
  */
 public class EntryPointsActivity extends FragmentActivity {
   //
-  private Cursor cursor;
+  private Cursor mCursor;
 
   //
-  private InsDbHelper dbHelper;
+  private InsDbHelper mDbHelper;
 
   //
-  private ListView listView;
+  private ListView mListView;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +33,10 @@ public class EntryPointsActivity extends FragmentActivity {
     setContentView(R.layout.activity_entry_points);
 
     //
-    listView = (ListView) findViewById(R.id.entry_points_list);
-    dbHelper = new InsDbHelper(this);
-    cursor =
-        dbHelper.getReadableDatabase().rawQuery("SELECT idBuilding AS _id, name FROM Building",
+    mListView = (ListView) findViewById(R.id.entry_points_list);
+    mDbHelper = new InsDbHelper(this);
+    mCursor =
+        mDbHelper.getReadableDatabase().rawQuery("SELECT idBuilding AS _id, name FROM Building",
             null);
 
     // For the cursor adapter, specify which columns go into which views.
@@ -45,16 +45,16 @@ public class EntryPointsActivity extends FragmentActivity {
 
     // Create an empty adapter we will use to display the loaded data.
     ListAdapter cursorAdapter =
-        new SimpleCursorAdapter(this, R.layout.entry_points_list_item, cursor, fromColumns,
+        new SimpleCursorAdapter(this, R.layout.entry_points_list_item, mCursor, fromColumns,
             toViews, 0);
-    listView.setAdapter(cursorAdapter);
+    mListView.setAdapter(cursorAdapter);
   }
 
   @Override
   protected void onDestroy() {
     super.onDestroy();
 
-    cursor.close();
-    dbHelper.close();
+    mCursor.close();
+    mDbHelper.close();
   }
 }

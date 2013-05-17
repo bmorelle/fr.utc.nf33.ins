@@ -38,20 +38,20 @@ public class LocationService extends Service {
     //
     private static final int TWO_MINUTES = 1000 * 60 * 2;
     //
-    private Location currentBestLocation;
+    private Location mCurrentBestLocation;
     //
-    private OnLocationChangedListener listener;
+    private OnLocationChangedListener mListener;
 
     @Override
     public void activate(OnLocationChangedListener listener) {
-      this.listener = listener;
+      mListener = listener;
 
-      if (locationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
+      if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
             GPS_MIN_DISTANCE, this);
 
-      if (locationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
+      if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
+        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
             NETWORK_MIN_DISTANCE, this);
     }
 
@@ -68,10 +68,10 @@ public class LocationService extends Service {
      */
     protected boolean isBetterLocation(Location location) {
       // A new location is always better than no location.
-      if (currentBestLocation == null) return true;
+      if (mCurrentBestLocation == null) return true;
 
       // Check whether the new location fix is newer or older.
-      long timeDelta = location.getTime() - currentBestLocation.getTime();
+      long timeDelta = location.getTime() - mCurrentBestLocation.getTime();
       boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
       boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
       boolean isNewer = timeDelta > 0;
@@ -84,14 +84,14 @@ public class LocationService extends Service {
       else if (isSignificantlyOlder) return false;
 
       // Check whether the new location fix is more or less accurate.
-      int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+      int accuracyDelta = (int) (location.getAccuracy() - mCurrentBestLocation.getAccuracy());
       boolean isLessAccurate = accuracyDelta > 0;
       boolean isMoreAccurate = accuracyDelta < 0;
       boolean isSignificantlyLessAccurate = accuracyDelta > 200;
 
       // Check if the old and new location are from the same provider.
       boolean isFromSameProvider =
-          isSameProvider(location.getProvider(), currentBestLocation.getProvider());
+          isSameProvider(location.getProvider(), mCurrentBestLocation.getProvider());
 
       // Determine location quality using a combination of timeliness and accuracy.
       if (isMoreAccurate)
@@ -114,14 +114,14 @@ public class LocationService extends Service {
 
     @Override
     public void onLocationChanged(Location location) {
-      if ((listener == null) || (!isBetterLocation(location))) return;
+      if ((mListener == null) || (!isBetterLocation(location))) return;
 
-      currentBestLocation = location;
-      listener.onLocationChanged(currentBestLocation);
+      mCurrentBestLocation = location;
+      mListener.onLocationChanged(mCurrentBestLocation);
 
       LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-          LocationIntent.NewLocation.newIntent(currentBestLocation.getLatitude(),
-              currentBestLocation.getLongitude()));
+          LocationIntent.NewLocation.newIntent(mCurrentBestLocation.getLatitude(),
+              mCurrentBestLocation.getLongitude()));
     }
 
     @Override
@@ -143,10 +143,10 @@ public class LocationService extends Service {
   //
   private final class GpsStatusListener implements GpsStatus.Listener {
     //
-    private float averageSnr = 0F;
+    private float mAverageSnr = 0F;
 
     //
-    private boolean firstFix = false;
+    private boolean mFirstFix = false;
 
     //
     private final byte SATELLITES_COUNT = 3;
@@ -157,14 +157,14 @@ public class LocationService extends Service {
     @Override
     public void onGpsStatusChanged(int event) {
       if (event == GpsStatus.GPS_EVENT_FIRST_FIX) {
-        firstFix = true;
+        mFirstFix = true;
       }
 
-      if ((event == GpsStatus.GPS_EVENT_STOPPED) && firstFix) {
+      if ((event == GpsStatus.GPS_EVENT_STOPPED) && mFirstFix) {
 
         float[] snrArr = new float[SATELLITES_COUNT];
 
-        for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
+        for (GpsSatellite sat : mLocationManager.getGpsStatus(null).getSatellites()) {
           int min = 0;
           for (int s = 0; s < SATELLITES_COUNT; ++s)
             if (snrArr[s] < snrArr[min]) min = s;
@@ -177,19 +177,19 @@ public class LocationService extends Service {
         for (float snr : snrArr)
           newAvgSnr += snr;
         newAvgSnr /= SATELLITES_COUNT;
-        if (newAvgSnr != 0) averageSnr = newAvgSnr;
+        if (newAvgSnr != 0) mAverageSnr = newAvgSnr;
 
         LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-            LocationIntent.NewSnr.newIntent(averageSnr));
+            LocationIntent.NewSnr.newIntent(mAverageSnr));
 
-        if ((averageSnr < SNR_THRESHOLD) && (state != State.INDOOR)) {
-          state = State.INDOOR;
+        if ((mAverageSnr < SNR_THRESHOLD) && (mState != State.INDOOR)) {
+          mState = State.INDOOR;
           LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              LocationIntent.Transition.newIntent(state.toString()));
-        } else if ((averageSnr >= SNR_THRESHOLD) && (state != State.OUTDOOR)) {
-          state = State.OUTDOOR;
+              LocationIntent.Transition.newIntent(mState.toString()));
+        } else if ((mAverageSnr >= SNR_THRESHOLD) && (mState != State.OUTDOOR)) {
+          mState = State.OUTDOOR;
           LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              LocationIntent.Transition.newIntent(state.toString()));
+              LocationIntent.Transition.newIntent(mState.toString()));
         }
       }
     }
@@ -207,42 +207,42 @@ public class LocationService extends Service {
   }
 
   //
-  private BestLocationProvider bestLocationProvider;
+  private BestLocationProvider mBestLocationProvider;
 
   //
-  private GpsStatusListener gpsStatusListener;
+  private GpsStatusListener mGpsStatusListener;
 
   //
-  private State initialState;
+  private State mInitialState;
 
   //
-  private LocationManager locationManager;
+  private LocationManager mLocationManager;
 
   //
-  private State state;
+  private State mState;
 
   /**
    * 
    * @return
    */
   public BestLocationProvider getBestLocationProvider() {
-    return bestLocationProvider;
+    return mBestLocationProvider;
   }
 
   @Override
   public IBinder onBind(Intent intent) {
-    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-    state =
-        initialState =
+    mState =
+        mInitialState =
             State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
-    switch (state) {
+    switch (mState) {
       case INDOOR:
-        locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+        mLocationManager.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener());
         break;
       case OUTDOOR:
-        bestLocationProvider = new BestLocationProvider();
-        locationManager.addGpsStatusListener(gpsStatusListener = new GpsStatusListener());
+        mBestLocationProvider = new BestLocationProvider();
+        mLocationManager.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener());
         break;
       default:
         throw new IllegalStateException("Unhandled Application State.");
@@ -258,21 +258,21 @@ public class LocationService extends Service {
 
   @Override
   public boolean onUnbind(Intent intent) {
-    switch (initialState) {
+    switch (mInitialState) {
       case INDOOR:
-        locationManager.removeGpsStatusListener(gpsStatusListener);
+        mLocationManager.removeGpsStatusListener(mGpsStatusListener);
         break;
       case OUTDOOR:
-        locationManager.removeUpdates(bestLocationProvider);
-        bestLocationProvider = null;
-        locationManager.removeGpsStatusListener(gpsStatusListener);
+        mLocationManager.removeUpdates(mBestLocationProvider);
+        mBestLocationProvider = null;
+        mLocationManager.removeGpsStatusListener(mGpsStatusListener);
         break;
       default:
         throw new IllegalStateException("Unhandled Application State.");
     }
 
-    gpsStatusListener = null;
-    locationManager = null;
+    mGpsStatusListener = null;
+    mLocationManager = null;
 
     return false;
   }

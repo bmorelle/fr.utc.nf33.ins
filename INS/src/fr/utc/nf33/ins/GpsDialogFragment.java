@@ -34,7 +34,7 @@ public class GpsDialogFragment extends DialogFragment {
   public static final String NAME = "GpsDialogFragment";
 
   // Use this instance of the interface to deliver action events.
-  private GpsDialogListener listener;
+  private GpsDialogListener mListener;
 
   /**
    * 
@@ -53,7 +53,7 @@ public class GpsDialogFragment extends DialogFragment {
     // Verify that the host activity implements the callback interface.
     try {
       // Instantiate the GpsDialogListener so we can send events to the host.
-      listener = (GpsDialogListener) activity;
+      mListener = (GpsDialogListener) activity;
     } catch (ClassCastException e) {
       Log.d(NAME, "OnAttach");
       // The activity doesn't implement the interface, throw exception.
@@ -69,7 +69,7 @@ public class GpsDialogFragment extends DialogFragment {
         .setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int id) {
-            listener.onGpsDialogPositiveClick(GpsDialogFragment.this);
+            mListener.onGpsDialogPositiveClick(GpsDialogFragment.this);
           }
         });
     return builder.create();

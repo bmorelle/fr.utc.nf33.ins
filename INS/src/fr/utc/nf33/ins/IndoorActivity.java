@@ -24,13 +24,13 @@ import fr.utc.nf33.ins.location.State;
  */
 public class IndoorActivity extends Activity {
   //
-  private ServiceConnection connection;
+  private ServiceConnection mConnection;
 
   //
-  private BroadcastReceiver newSnrReceiver;
+  private BroadcastReceiver mNewSnrReceiver;
 
   //
-  private BroadcastReceiver transitionReceiver;
+  private BroadcastReceiver mTransitionReceiver;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +43,7 @@ public class IndoorActivity extends Activity {
     // Connect to the Location Service.
     Intent intent = new Intent(this, LocationService.class);
     intent.putExtra(LocationIntent.Transition.EXTRA_NEW_STATE, State.INDOOR.toString());
-    connection = new ServiceConnection() {
+    mConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
 
@@ -54,10 +54,10 @@ public class IndoorActivity extends Activity {
 
       }
     };
-    bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
-    newSnrReceiver = new BroadcastReceiver() {
+    mNewSnrReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
@@ -65,10 +65,10 @@ public class IndoorActivity extends Activity {
             + Float.toString(snr));
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
+    LocalBroadcastManager.getInstance(this).registerReceiver(mNewSnrReceiver,
         LocationIntent.NewSnr.newIntentFilter());
 
-    transitionReceiver = new BroadcastReceiver() {
+    mTransitionReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         State newState =
@@ -84,7 +84,7 @@ public class IndoorActivity extends Activity {
         }
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
+    LocalBroadcastManager.getInstance(this).registerReceiver(mTransitionReceiver,
         LocationIntent.Transition.newIntentFilter());
 
     super.onStart();
@@ -93,14 +93,14 @@ public class IndoorActivity extends Activity {
   @Override
   protected void onStop() {
     // Disconnect from the Location Service.
-    unbindService(connection);
+    unbindService(mConnection);
 
     // Unregister receivers.
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
-    newSnrReceiver = null;
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
-    transitionReceiver = null;
-    connection = null;
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewSnrReceiver);
+    mNewSnrReceiver = null;
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionReceiver);
+    mTransitionReceiver = null;
+    mConnection = null;
 
     super.onStop();
   }

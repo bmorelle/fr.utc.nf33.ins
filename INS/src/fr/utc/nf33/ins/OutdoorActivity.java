@@ -55,19 +55,19 @@ public final class OutdoorActivity extends FragmentActivity
   }
 
   // Defines callbacks for service binding, passed to bindService().
-  private ServiceConnection connection;
+  private ServiceConnection mConnection;
 
   //
-  private SupportMapFragment mapFragment;
+  private SupportMapFragment mMapFragment;
 
   //
-  private BroadcastReceiver newLocationReceiver;
+  private BroadcastReceiver mNewLocationReceiver;
 
   //
-  private BroadcastReceiver newSnrReceiver;
+  private BroadcastReceiver mNewSnrReceiver;
 
   //
-  private BroadcastReceiver transitionReceiver;
+  private BroadcastReceiver mTransitionReceiver;
 
   /**
    * Called when the user clicks the Entry Points button.
@@ -84,9 +84,9 @@ public final class OutdoorActivity extends FragmentActivity
     setContentView(R.layout.activity_outdoor);
 
     // Create a Google Map Fragment with desired options.
-    mapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
+    mMapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-    fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
+    fragmentTransaction.add(R.id.map_fragment_container, mMapFragment);
     fragmentTransaction.commit();
   }
 
@@ -115,17 +115,17 @@ public final class OutdoorActivity extends FragmentActivity
     }
 
     // Setup the map.
-    GoogleMap map = mapFragment.getMap();
+    GoogleMap map = mMapFragment.getMap();
     map.setMyLocationEnabled(true);
 
     // Connect to the Location Service.
     Intent intent = new Intent(this, LocationService.class);
     intent.putExtra(LocationIntent.Transition.EXTRA_NEW_STATE, State.OUTDOOR.toString());
-    connection = new ServiceConnection() {
+    mConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to LocationService, cast the IBinder and get LocationService instance.
-        mapFragment.getMap().setLocationSource(
+        mMapFragment.getMap().setLocationSource(
             ((LocalBinder) service).getService().getBestLocationProvider());
       }
 
@@ -134,22 +134,22 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
-    newLocationReceiver = new BroadcastReceiver() {
+    mNewLocationReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         double lat = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LATITUDE, 0);
         double lon = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LONGITUDE, 0);
-        mapFragment.getMap().animateCamera(
+        mMapFragment.getMap().animateCamera(
             CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), DEFAULT_ZOOM_LEVEL));
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(newLocationReceiver,
+    LocalBroadcastManager.getInstance(this).registerReceiver(mNewLocationReceiver,
         LocationIntent.NewLocation.newIntentFilter());
 
-    newSnrReceiver = new BroadcastReceiver() {
+    mNewSnrReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
@@ -157,10 +157,10 @@ public final class OutdoorActivity extends FragmentActivity
             .setText("SNR (3 premiers): " + Float.toString(snr));
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(newSnrReceiver,
+    LocalBroadcastManager.getInstance(this).registerReceiver(mNewSnrReceiver,
         LocationIntent.NewSnr.newIntentFilter());
 
-    transitionReceiver = new BroadcastReceiver() {
+    mTransitionReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         State newState =
@@ -177,23 +177,23 @@ public final class OutdoorActivity extends FragmentActivity
         }
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(transitionReceiver,
+    LocalBroadcastManager.getInstance(this).registerReceiver(mTransitionReceiver,
         LocationIntent.Transition.newIntentFilter());
   }
 
   @Override
   protected void onStop() {
     // Disconnect from the Location Service.
-    unbindService(connection);
+    unbindService(mConnection);
 
     // Unregister receivers.
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(newLocationReceiver);
-    newLocationReceiver = null;
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
-    newSnrReceiver = null;
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(transitionReceiver);
-    transitionReceiver = null;
-    connection = null;
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
+    mNewLocationReceiver = null;
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewSnrReceiver);
+    mNewSnrReceiver = null;
+    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionReceiver);
+    mTransitionReceiver = null;
+    mConnection = null;
 
     super.onStop();
   }
