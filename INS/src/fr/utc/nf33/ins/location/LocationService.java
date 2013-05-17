@@ -6,8 +6,6 @@ package fr.utc.nf33.ins.location;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.location.GpsSatellite;
-import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -140,61 +138,6 @@ public class LocationService extends Service {
     }
   }
 
-  //
-  private final class GpsStatusListener implements GpsStatus.Listener {
-    //
-    private float mAverageSnr = 0F;
-
-    //
-    private boolean mFirstFix = false;
-
-    //
-    private final byte SATELLITES_COUNT = 3;
-
-    //
-    private final byte SNR_THRESHOLD = 35;
-
-    @Override
-    public void onGpsStatusChanged(int event) {
-      if (event == GpsStatus.GPS_EVENT_FIRST_FIX) {
-        mFirstFix = true;
-      }
-
-      if ((event == GpsStatus.GPS_EVENT_STOPPED) && mFirstFix) {
-
-        float[] snrArr = new float[SATELLITES_COUNT];
-
-        for (GpsSatellite sat : mLocationManager.getGpsStatus(null).getSatellites()) {
-          int min = 0;
-          for (int s = 0; s < SATELLITES_COUNT; ++s)
-            if (snrArr[s] < snrArr[min]) min = s;
-
-          float snr = sat.getSnr();
-          if (snr > snrArr[min]) snrArr[min] = snr;
-        }
-
-        float newAvgSnr = 0;
-        for (float snr : snrArr)
-          newAvgSnr += snr;
-        newAvgSnr /= SATELLITES_COUNT;
-        if (newAvgSnr != 0) mAverageSnr = newAvgSnr;
-
-        LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-            LocationIntent.NewSnr.newIntent(mAverageSnr));
-
-        if ((mAverageSnr < SNR_THRESHOLD) && (mState != State.INDOOR)) {
-          mState = State.INDOOR;
-          LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              LocationIntent.Transition.newIntent(mState.toString()));
-        } else if ((mAverageSnr >= SNR_THRESHOLD) && (mState != State.OUTDOOR)) {
-          mState = State.OUTDOOR;
-          LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
-              LocationIntent.Transition.newIntent(mState.toString()));
-        }
-      }
-    }
-  }
-
   /**
    * Class used for the client Binder. Because we know this service always runs in the same process
    * as its clients, we don't need to deal with IPC.
@@ -238,11 +181,13 @@ public class LocationService extends Service {
             State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
     switch (mState) {
       case INDOOR:
-        mLocationManager.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener());
+        mLocationManager.addGpsStatusListener(mGpsStatusListener =
+            new GpsStatusListener(this, State.INDOOR));
         break;
       case OUTDOOR:
         mBestLocationProvider = new BestLocationProvider();
-        mLocationManager.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener());
+        mLocationManager.addGpsStatusListener(mGpsStatusListener =
+            new GpsStatusListener(this, State.OUTDOOR));
         break;
       default:
         throw new IllegalStateException("Unhandled Application State.");

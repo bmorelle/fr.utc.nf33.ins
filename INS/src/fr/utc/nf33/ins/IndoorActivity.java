@@ -33,6 +33,11 @@ public class IndoorActivity extends Activity {
   private BroadcastReceiver mTransitionReceiver;
 
   @Override
+  public void onBackPressed() {
+
+  }
+
+  @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_indoor);
