@@ -28,8 +28,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import fr.utc.nf33.ins.location.LocationIntent;
-import fr.utc.nf33.ins.location.LocationService;
-import fr.utc.nf33.ins.location.LocationService.LocalBinder;
+import fr.utc.nf33.ins.location.OutdoorLocationService;
+import fr.utc.nf33.ins.location.OutdoorLocationService.LocalBinder;
 import fr.utc.nf33.ins.location.State;
 
 /**
@@ -68,6 +68,11 @@ public final class OutdoorActivity extends FragmentActivity
 
   //
   private BroadcastReceiver mTransitionReceiver;
+
+  @Override
+  public void onBackPressed() {
+
+  }
 
   /**
    * Called when the user clicks the Entry Points button.
@@ -118,9 +123,8 @@ public final class OutdoorActivity extends FragmentActivity
     GoogleMap map = mMapFragment.getMap();
     map.setMyLocationEnabled(true);
 
-    // Connect to the Location Service.
-    Intent intent = new Intent(this, LocationService.class);
-    intent.putExtra(LocationIntent.Transition.EXTRA_NEW_STATE, State.OUTDOOR.toString());
+    // Connect to the Outdoor Location Service.
+    Intent intent = new Intent(this, OutdoorLocationService.class);
     mConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -137,6 +141,8 @@ public final class OutdoorActivity extends FragmentActivity
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
+    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+
     mNewLocationReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
@@ -146,8 +152,7 @@ public final class OutdoorActivity extends FragmentActivity
             CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lon), DEFAULT_ZOOM_LEVEL));
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(mNewLocationReceiver,
-        LocationIntent.NewLocation.newIntentFilter());
+    lbm.registerReceiver(mNewLocationReceiver, LocationIntent.NewLocation.newIntentFilter());
 
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
@@ -157,8 +162,7 @@ public final class OutdoorActivity extends FragmentActivity
             .setText("SNR (3 premiers): " + Float.toString(snr));
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(mNewSnrReceiver,
-        LocationIntent.NewSnr.newIntentFilter());
+    lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
 
     mTransitionReceiver = new BroadcastReceiver() {
       @Override
@@ -177,21 +181,21 @@ public final class OutdoorActivity extends FragmentActivity
         }
       }
     };
-    LocalBroadcastManager.getInstance(this).registerReceiver(mTransitionReceiver,
-        LocationIntent.Transition.newIntentFilter());
+    lbm.registerReceiver(mTransitionReceiver, LocationIntent.Transition.newIntentFilter());
   }
 
   @Override
   protected void onStop() {
-    // Disconnect from the Location Service.
+    // Disconnect from the Outdoor Location Service.
     unbindService(mConnection);
 
     // Unregister receivers.
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
+    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+    lbm.unregisterReceiver(mNewLocationReceiver);
     mNewLocationReceiver = null;
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewSnrReceiver);
+    lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
-    LocalBroadcastManager.getInstance(this).unregisterReceiver(mTransitionReceiver);
+    lbm.unregisterReceiver(mTransitionReceiver);
     mTransitionReceiver = null;
     mConnection = null;
 

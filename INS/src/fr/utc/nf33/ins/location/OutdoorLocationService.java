@@ -22,7 +22,7 @@ import com.google.android.gms.maps.LocationSource;
  * @author
  * 
  */
-public class LocationService extends Service {
+public class OutdoorLocationService extends Service {
   //
   private final class BestLocationProvider implements LocationSource, LocationListener {
     //
@@ -44,12 +44,12 @@ public class LocationService extends Service {
     public void activate(OnLocationChangedListener listener) {
       mListener = listener;
 
-      if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null)
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME,
-            GPS_MIN_DISTANCE, this);
-
-      if (mLocationManager.getProvider(LocationManager.NETWORK_PROVIDER) != null)
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
+      LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+      if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
+            this);
+      if (lm.getProvider(LocationManager.NETWORK_PROVIDER) != null)
+        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
             NETWORK_MIN_DISTANCE, this);
     }
 
@@ -117,7 +117,7 @@ public class LocationService extends Service {
       mCurrentBestLocation = location;
       mListener.onLocationChanged(mCurrentBestLocation);
 
-      LocalBroadcastManager.getInstance(LocationService.this).sendBroadcast(
+      LocalBroadcastManager.getInstance(OutdoorLocationService.this).sendBroadcast(
           LocationIntent.NewLocation.newIntent(mCurrentBestLocation.getLatitude(),
               mCurrentBestLocation.getLongitude()));
     }
@@ -143,9 +143,9 @@ public class LocationService extends Service {
    * as its clients, we don't need to deal with IPC.
    */
   public class LocalBinder extends Binder {
-    public LocationService getService() {
+    public OutdoorLocationService getService() {
       // Return this instance of LocationService so that clients can call public methods.
-      return LocationService.this;
+      return OutdoorLocationService.this;
     }
   }
 
@@ -154,15 +154,6 @@ public class LocationService extends Service {
 
   //
   private GpsStatusListener mGpsStatusListener;
-
-  //
-  private State mInitialState;
-
-  //
-  private LocationManager mLocationManager;
-
-  //
-  private State mState;
 
   /**
    * 
@@ -174,50 +165,20 @@ public class LocationService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    mBestLocationProvider = new BestLocationProvider();
+    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
 
-    mState =
-        mInitialState =
-            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
-    switch (mState) {
-      case INDOOR:
-        mLocationManager.addGpsStatusListener(mGpsStatusListener =
-            new GpsStatusListener(this, State.INDOOR));
-        break;
-      case OUTDOOR:
-        mBestLocationProvider = new BestLocationProvider();
-        mLocationManager.addGpsStatusListener(mGpsStatusListener =
-            new GpsStatusListener(this, State.OUTDOOR));
-        break;
-      default:
-        throw new IllegalStateException("Unhandled Application State.");
-    }
-
-    return new LocalBinder(); // Binder given to clients.
-  }
-
-  @Override
-  public void onCreate() {
-
+    return new LocalBinder();
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
-    switch (mInitialState) {
-      case INDOOR:
-        mLocationManager.removeGpsStatusListener(mGpsStatusListener);
-        break;
-      case OUTDOOR:
-        mLocationManager.removeUpdates(mBestLocationProvider);
-        mBestLocationProvider = null;
-        mLocationManager.removeGpsStatusListener(mGpsStatusListener);
-        break;
-      default:
-        throw new IllegalStateException("Unhandled Application State.");
-    }
-
+    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    lm.removeUpdates(mBestLocationProvider);
+    mBestLocationProvider = null;
+    lm.removeGpsStatusListener(mGpsStatusListener);
     mGpsStatusListener = null;
-    mLocationManager = null;
 
     return false;
   }
