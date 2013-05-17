@@ -36,7 +36,7 @@ public class OutdoorLocationService extends Service {
     //
     private static final int TWO_MINUTES = 1000 * 60 * 2;
     //
-    private Location mCurrentBestLocation;
+    private Location mBestLocation;
     //
     private OnLocationChangedListener mListener;
 
@@ -66,10 +66,10 @@ public class OutdoorLocationService extends Service {
      */
     private boolean isBetterLocation(Location location) {
       // A new location is always better than no location.
-      if (mCurrentBestLocation == null) return true;
+      if (mBestLocation == null) return true;
 
       // Check whether the new location fix is newer or older.
-      long timeDelta = location.getTime() - mCurrentBestLocation.getTime();
+      long timeDelta = location.getTime() - mBestLocation.getTime();
       boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
       boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
       boolean isNewer = timeDelta > 0;
@@ -82,14 +82,14 @@ public class OutdoorLocationService extends Service {
       else if (isSignificantlyOlder) return false;
 
       // Check whether the new location fix is more or less accurate.
-      int accuracyDelta = (int) (location.getAccuracy() - mCurrentBestLocation.getAccuracy());
+      int accuracyDelta = (int) (location.getAccuracy() - mBestLocation.getAccuracy());
       boolean isLessAccurate = accuracyDelta > 0;
       boolean isMoreAccurate = accuracyDelta < 0;
       boolean isSignificantlyLessAccurate = accuracyDelta > 200;
 
       // Check if the old and new location are from the same provider.
       boolean isFromSameProvider =
-          isSameProvider(location.getProvider(), mCurrentBestLocation.getProvider());
+          isSameProvider(location.getProvider(), mBestLocation.getProvider());
 
       // Determine location quality using a combination of timeliness and accuracy.
       if (isMoreAccurate)
@@ -114,12 +114,12 @@ public class OutdoorLocationService extends Service {
     public void onLocationChanged(Location location) {
       if ((mListener == null) || (!isBetterLocation(location))) return;
 
-      mCurrentBestLocation = location;
-      mListener.onLocationChanged(mCurrentBestLocation);
+      mBestLocation = location;
+      mListener.onLocationChanged(mBestLocation);
 
       LocalBroadcastManager.getInstance(OutdoorLocationService.this).sendBroadcast(
-          LocationIntent.NewLocation.newIntent(mCurrentBestLocation.getLatitude(),
-              mCurrentBestLocation.getLongitude()));
+          LocationIntent.NewLocation.newIntent(mBestLocation.getLatitude(),
+              mBestLocation.getLongitude()));
     }
 
     @Override
