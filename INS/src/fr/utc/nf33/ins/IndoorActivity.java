@@ -40,6 +40,8 @@ public class IndoorActivity extends Activity {
 
   @Override
   protected void onStart() {
+    super.onStart();
+
     // Connect to the Indoor Location Service.
     Intent intent = new Intent(this, IndoorLocationService.class);
     mConnection = new ServiceConnection() {
@@ -85,14 +87,15 @@ public class IndoorActivity extends Activity {
       }
     };
     lbm.registerReceiver(mTransitionReceiver, LocationIntent.Transition.newIntentFilter());
-
-    super.onStart();
   }
 
   @Override
   protected void onStop() {
+    super.onStop();
+
     // Disconnect from the Indoor Location Service.
     unbindService(mConnection);
+    mConnection = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -100,8 +103,5 @@ public class IndoorActivity extends Activity {
     mNewSnrReceiver = null;
     lbm.unregisterReceiver(mTransitionReceiver);
     mTransitionReceiver = null;
-    mConnection = null;
-
-    super.onStop();
   }
 }

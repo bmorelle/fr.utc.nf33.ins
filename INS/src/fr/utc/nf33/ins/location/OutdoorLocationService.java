@@ -166,20 +166,34 @@ public class OutdoorLocationService extends Service {
   @Override
   public IBinder onBind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    mBestLocationProvider = new BestLocationProvider();
     lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
 
     return new LocalBinder();
   }
 
   @Override
+  public void onCreate() {
+    mBestLocationProvider = new BestLocationProvider();
+  }
+
+  @Override
+  public void onDestroy() {
+    mBestLocationProvider = null;
+  }
+
+  @Override
+  public void onRebind(Intent intent) {
+    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
+  }
+
+  @Override
   public boolean onUnbind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     lm.removeUpdates(mBestLocationProvider);
-    mBestLocationProvider = null;
     lm.removeGpsStatusListener(mGpsStatusListener);
     mGpsStatusListener = null;
 
-    return false;
+    return true;
   }
 }

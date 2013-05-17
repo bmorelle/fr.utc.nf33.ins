@@ -93,6 +93,10 @@ public final class OutdoorActivity extends FragmentActivity
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mMapFragment);
     fragmentTransaction.commit();
+
+    // Start the Outdoor Location Service.
+    Intent intent = new Intent(this, OutdoorLocationService.class);
+    startService(intent);
   }
 
   @Override
@@ -100,6 +104,15 @@ public final class OutdoorActivity extends FragmentActivity
     // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.main, menu);
     return true;
+  }
+
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+
+    // Stop the Outdoor Location Service.
+    Intent intent = new Intent(this, OutdoorLocationService.class);
+    stopService(intent);
   }
 
   @Override
@@ -138,7 +151,7 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mConnection, 0);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -186,8 +199,11 @@ public final class OutdoorActivity extends FragmentActivity
 
   @Override
   protected void onStop() {
+    super.onStop();
+
     // Disconnect from the Outdoor Location Service.
     unbindService(mConnection);
+    mConnection = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -197,8 +213,5 @@ public final class OutdoorActivity extends FragmentActivity
     mNewSnrReceiver = null;
     lbm.unregisterReceiver(mTransitionReceiver);
     mTransitionReceiver = null;
-    mConnection = null;
-
-    super.onStop();
   }
 }

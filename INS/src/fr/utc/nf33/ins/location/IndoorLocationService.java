@@ -40,11 +40,17 @@ public class IndoorLocationService extends Service {
   }
 
   @Override
+  public void onRebind(Intent intent) {
+    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.INDOOR));
+  }
+
+  @Override
   public boolean onUnbind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     lm.removeGpsStatusListener(mGpsStatusListener);
     mGpsStatusListener = null;
 
-    return false;
+    return true;
   }
 }
