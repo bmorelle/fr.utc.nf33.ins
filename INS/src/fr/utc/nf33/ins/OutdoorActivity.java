@@ -53,9 +53,6 @@ public final class OutdoorActivity extends FragmentActivity
     GOOGLE_MAP_OPTIONS.zoomGesturesEnabled(true);
   }
 
-  //
-  private boolean bound;
-
   // Defines callbacks for service binding, passed to bindService().
   private ServiceConnection connection;
 
@@ -90,9 +87,6 @@ public final class OutdoorActivity extends FragmentActivity
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
     fragmentTransaction.add(R.id.map_fragment_container, mapFragment);
     fragmentTransaction.commit();
-
-    // The Location Service is not bound.
-    bound = false;
   }
 
   @Override
@@ -131,14 +125,13 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to LocationService, cast the IBinder and get LocationService instance.
-        bound = true;
         mapFragment.getMap().setLocationSource(
             ((LocalBinder) service).getService().getBestLocationProvider());
       }
 
       @Override
       public void onServiceDisconnected(ComponentName name) {
-        bound = false;
+
       }
     };
     bindService(intent, connection, Context.BIND_AUTO_CREATE);
@@ -194,10 +187,7 @@ public final class OutdoorActivity extends FragmentActivity
   @Override
   protected void onStop() {
     // Disconnect from the Location Service.
-    if (bound) {
-      unbindService(connection);
-      bound = false;
-    }
+    unbindService(connection);
 
     // Unregister receivers.
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newLocationReceiver);

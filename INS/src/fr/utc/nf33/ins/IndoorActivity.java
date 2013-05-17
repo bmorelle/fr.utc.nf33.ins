@@ -23,9 +23,6 @@ import android.widget.TextView;
  */
 public class IndoorActivity extends Activity {
   //
-  private boolean bound;
-
-  //
   private ServiceConnection connection;
 
   //
@@ -38,9 +35,6 @@ public class IndoorActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_indoor);
-
-    // The Location Service is not bound.
-    bound = false;
   }
 
   @Override
@@ -52,12 +46,12 @@ public class IndoorActivity extends Activity {
     connection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
-        bound = true;
+
       }
 
       @Override
       public void onServiceDisconnected(ComponentName name) {
-        bound = false;
+
       }
     };
     bindService(intent, connection, Context.BIND_AUTO_CREATE);
@@ -100,10 +94,7 @@ public class IndoorActivity extends Activity {
   @Override
   protected void onStop() {
     // Disconnect from the Location Service.
-    if (bound) {
-      unbindService(connection);
-      bound = false;
-    }
+    unbindService(connection);
 
     // Unregister receivers.
     LocalBroadcastManager.getInstance(this).unregisterReceiver(newSnrReceiver);
