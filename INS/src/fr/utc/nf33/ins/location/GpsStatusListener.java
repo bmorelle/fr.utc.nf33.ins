@@ -46,9 +46,8 @@ final class GpsStatusListener implements GpsStatus.Listener {
     if ((event == GpsStatus.GPS_EVENT_STOPPED) && mFirstFix) {
       float[] snrArr = new float[SATELLITES_COUNT];
 
-      LocationManager locationManager =
-          (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
-      for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
+      LocationManager lm = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+      for (GpsSatellite sat : lm.getGpsStatus(null).getSatellites()) {
         int min = 0;
         for (int s = 0; s < SATELLITES_COUNT; ++s)
           if (snrArr[s] < snrArr[min]) min = s;
@@ -61,6 +60,7 @@ final class GpsStatusListener implements GpsStatus.Listener {
       for (float snr : snrArr)
         newAvgSnr += snr;
       newAvgSnr /= SATELLITES_COUNT;
+
       if (newAvgSnr != 0) mAverageSnr = newAvgSnr;
 
       LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
