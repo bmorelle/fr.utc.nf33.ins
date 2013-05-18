@@ -28,7 +28,7 @@ public class IndoorActivity extends Activity {
   //
   private BroadcastReceiver mNewSnrReceiver;
   //
-  private BroadcastReceiver mTransitionReceiver;
+  private BroadcastReceiver mNewStateReceiver;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -68,11 +68,11 @@ public class IndoorActivity extends Activity {
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
 
-    mTransitionReceiver = new BroadcastReceiver() {
+    mNewStateReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
         State newState =
-            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
+            State.valueOf(intent.getStringExtra(LocationIntent.NewState.EXTRA_STATE));
         switch (newState) {
           case OUTDOOR:
             startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));
@@ -84,7 +84,7 @@ public class IndoorActivity extends Activity {
         }
       }
     };
-    lbm.registerReceiver(mTransitionReceiver, LocationIntent.Transition.newIntentFilter());
+    lbm.registerReceiver(mNewStateReceiver, LocationIntent.NewState.newIntentFilter());
   }
 
   @Override
@@ -99,7 +99,7 @@ public class IndoorActivity extends Activity {
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
-    lbm.unregisterReceiver(mTransitionReceiver);
-    mTransitionReceiver = null;
+    lbm.unregisterReceiver(mNewStateReceiver);
+    mNewStateReceiver = null;
   }
 }

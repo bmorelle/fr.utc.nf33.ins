@@ -17,6 +17,41 @@ public final class LocationIntent {
    * @author
    * 
    */
+  public static final class NewCloseBuildings {
+    /**
+     * 
+     */
+    public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_CLOSE_BUILDINGS";
+
+    /**
+     * 
+     * @return
+     */
+    public static final Intent newIntent() {
+      Intent intent = new Intent(ACTION_NAME);
+
+      return intent;
+    }
+
+    /**
+     * 
+     * @return
+     */
+    public static final IntentFilter newIntentFilter() {
+      return new IntentFilter(ACTION_NAME);
+    }
+
+    // Suppress default constructor for noninstantiability.
+    private NewCloseBuildings() {
+
+    }
+  }
+
+  /**
+   * 
+   * @author
+   * 
+   */
   public static final class NewLocation {
     /**
      * 
@@ -108,16 +143,16 @@ public final class LocationIntent {
    * @author
    * 
    */
-  public static final class Transition {
+  public static final class NewState {
     /**
      * 
      */
-    public static final String ACTION_NAME = "fr.utc.nf33.ins.TRANSITION";
+    public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_STATE";
 
     /**
      * 
      */
-    public static final String EXTRA_NEW_STATE = "fr.utc.nf33.ins.NEW_STATE";
+    public static final String EXTRA_STATE = "fr.utc.nf33.ins.STATE";
 
     /**
      * 
@@ -126,7 +161,7 @@ public final class LocationIntent {
      */
     public static final Intent newIntent(String newState) {
       Intent intent = new Intent(ACTION_NAME);
-      intent.putExtra(EXTRA_NEW_STATE, newState);
+      intent.putExtra(EXTRA_STATE, newState);
 
       return intent;
     }
@@ -140,7 +175,7 @@ public final class LocationIntent {
     }
 
     // Suppress default constructor for noninstantiability.
-    private Transition() {
+    private NewState() {
 
     }
   }

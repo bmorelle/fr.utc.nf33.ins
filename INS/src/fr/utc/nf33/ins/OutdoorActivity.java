@@ -3,6 +3,8 @@
  */
 package fr.utc.nf33.ins;
 
+import java.util.List;
+
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,6 +20,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +30,7 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import fr.utc.nf33.ins.location.Building;
 import fr.utc.nf33.ins.location.LocationIntent;
 import fr.utc.nf33.ins.location.OutdoorLocationService;
 import fr.utc.nf33.ins.location.OutdoorLocationService.LocalBinder;
@@ -59,11 +63,15 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private SupportMapFragment mMapFragment;
   //
+  private BroadcastReceiver mNewCloseBuildingsReceiver;
+  //
   private BroadcastReceiver mNewLocationReceiver;
   //
   private BroadcastReceiver mNewSnrReceiver;
   //
-  private BroadcastReceiver mTransitionReceiver;
+  private BroadcastReceiver mNewStateReceiver;
+  //
+  private OutdoorLocationService mService;
 
   @Override
   public void onBackPressed() {
@@ -138,8 +146,8 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to LocationService, cast the IBinder and get LocationService instance.
-        mMapFragment.getMap().setLocationSource(
-            ((LocalBinder) service).getService().getBestLocationProvider());
+        mService = ((LocalBinder) service).getService();
+        mMapFragment.getMap().setLocationSource(mService.getBestLocationProvider());
       }
 
       @Override
@@ -151,6 +159,17 @@ public final class OutdoorActivity extends FragmentActivity
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+
+    mNewCloseBuildingsReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        List<Building> closeBuildings = mService.getBestLocationProvider().getCloseBuildings();
+        ((Button) OutdoorActivity.this.findViewById(R.id.button_entry_points)).setText(Integer
+            .toString(closeBuildings.size()));
+      }
+    };
+    lbm.registerReceiver(mNewCloseBuildingsReceiver,
+        LocationIntent.NewCloseBuildings.newIntentFilter());
 
     mNewLocationReceiver = new BroadcastReceiver() {
       @Override
@@ -173,11 +192,10 @@ public final class OutdoorActivity extends FragmentActivity
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
 
-    mTransitionReceiver = new BroadcastReceiver() {
+    mNewStateReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        State newState =
-            State.valueOf(intent.getStringExtra(LocationIntent.Transition.EXTRA_NEW_STATE));
+        State newState = State.valueOf(intent.getStringExtra(LocationIntent.NewState.EXTRA_STATE));
         switch (newState) {
           case INDOOR:
             // startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
@@ -190,7 +208,7 @@ public final class OutdoorActivity extends FragmentActivity
         }
       }
     };
-    lbm.registerReceiver(mTransitionReceiver, LocationIntent.Transition.newIntentFilter());
+    lbm.registerReceiver(mNewStateReceiver, LocationIntent.NewState.newIntentFilter());
   }
 
   @Override
@@ -200,14 +218,17 @@ public final class OutdoorActivity extends FragmentActivity
     // Disconnect from the Outdoor Location Service.
     unbindService(mConnection);
     mConnection = null;
+    mService = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+    lbm.unregisterReceiver(mNewCloseBuildingsReceiver);
+    mNewCloseBuildingsReceiver = null;
     lbm.unregisterReceiver(mNewLocationReceiver);
     mNewLocationReceiver = null;
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
-    lbm.unregisterReceiver(mTransitionReceiver);
-    mTransitionReceiver = null;
+    lbm.unregisterReceiver(mNewStateReceiver);
+    mNewStateReceiver = null;
   }
 }

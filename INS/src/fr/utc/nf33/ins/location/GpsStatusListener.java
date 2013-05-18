@@ -22,19 +22,24 @@ final class GpsStatusListener implements GpsStatus.Listener {
   //
   private boolean mFirstFix;
   //
-  private final State mInitialState;
+  private final State mState;
 
   //
-  private final byte SATELLITES_COUNT = 3;
+  private static final byte SATELLITES_COUNT = 3;
   //
-  private final byte SNR_THRESHOLD = 35;
+  public static final byte SNR_THRESHOLD = 35;
 
   //
-  GpsStatusListener(Context context, State initialState) {
+  GpsStatusListener(Context context, State state) {
     mContext = context;
-    mInitialState = initialState;
+    mState = state;
     mAverageSnr = 0F;
     mFirstFix = false;
+  }
+
+  //
+  float getAverageSnr() {
+    return mAverageSnr;
   }
 
   @Override
@@ -64,10 +69,8 @@ final class GpsStatusListener implements GpsStatus.Listener {
       LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
       lbm.sendBroadcast(LocationIntent.NewSnr.newIntent(mAverageSnr));
 
-      if ((mAverageSnr < SNR_THRESHOLD) && (mInitialState != State.INDOOR))
-        lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.INDOOR.toString()));
-      else if ((mAverageSnr >= SNR_THRESHOLD) && (mInitialState != State.OUTDOOR))
-        lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.OUTDOOR.toString()));
+      if ((mState == State.INDOOR) && (mAverageSnr >= SNR_THRESHOLD))
+        lbm.sendBroadcast(LocationIntent.NewState.newIntent(State.OUTDOOR.toString()));
     }
   }
 }

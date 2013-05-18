@@ -3,6 +3,8 @@
  */
 package fr.utc.nf33.ins.location;
 
+import java.util.List;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +20,8 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.LocationSource;
 
+import fr.utc.nf33.ins.db.InsDbHelper;
+
 
 /**
  * 
@@ -26,32 +30,78 @@ import com.google.android.gms.maps.LocationSource;
  */
 public class OutdoorLocationService extends Service {
   //
-  private final class BestLocationProvider implements LocationSource, LocationListener {
+  public final class BestLocationProvider implements LocationSource, LocationListener {
     //
-    private final class BestLocationTask extends AsyncTask<Void, Location, Cursor> {
+    private final class BestLocationTask extends AsyncTask<Void, Void, List<Building>> {
+      //
+      private final class LocationPlaceholder {
+        //
+        private final float accuracy;
+        //
+        private final double latitude;
+        //
+        private final double longitude;
+        //
+        private final String provider;
+        //
+        private final long time;
+
+        //
+        private LocationPlaceholder(Location location) {
+          accuracy = location.getAccuracy();
+          latitude = location.getLatitude();
+          longitude = location.getLongitude();
+          provider = new String(location.getProvider());
+          time = location.getTime();
+        }
+      }
+
       //
       private static final int TWO_MINUTES = 1000 * 60 * 2;
 
       //
-      private final Location mBestLocation;
+      private final float mAverageSnr;
       //
-      private final Location mLocation;
+      private LocationPlaceholder mBestLocation;
+      //
+      private final LocationPlaceholder mLocation;
+      //
+      private final Location mPassthrough;
 
       //
       private BestLocationTask(Location location, Location bestLocation) {
-        mLocation = location;
-        mBestLocation = bestLocation;
+        mPassthrough = location;
+        mLocation = new LocationPlaceholder(location);
+        if (bestLocation != null) mBestLocation = new LocationPlaceholder(bestLocation);
+        mAverageSnr = mGpsStatusListener.getAverageSnr();
       }
 
       @Override
-      protected Cursor doInBackground(Void... params) {
+      protected List<Building> doInBackground(Void... params) {
         if (!isBetterLocation(mLocation, mBestLocation)) return null;
 
-        publishProgress(mLocation);
+        mBestLocation = mLocation;
+        publishProgress();
 
-        // TODO
+        if (mAverageSnr < GpsStatusListener.SNR_THRESHOLD) {
+          InsDbHelper dbHelper = new InsDbHelper(OutdoorLocationService.this);
 
-        return null;
+          Cursor cursor = dbHelper.getEntryPoints();
+          if (isCancelled()) {
+            cursor.close();
+            dbHelper.close();
+            return null;
+          }
+          List<Building> closeBuildings =
+              LocationHelper.getCloseBuildings(mBestLocation.latitude, mBestLocation.longitude,
+                  cursor);
+          cursor.close();
+          dbHelper.close();
+
+          return closeBuildings;
+        } else {
+          return null;
+        }
       }
 
       /**
@@ -61,14 +111,15 @@ public class OutdoorLocationService extends Service {
        * @param currentBestLocation The current Location fix, to which you want to compare the new
        *        one
        */
-      private boolean isBetterLocation(Location location, Location currentBestLocation) {
+      private boolean isBetterLocation(LocationPlaceholder location,
+          LocationPlaceholder currentBestLocation) {
         if (currentBestLocation == null) {
           // A new location is always better than no location
           return true;
         }
 
         // Check whether the new location fix is newer or older
-        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        long timeDelta = location.time - currentBestLocation.time;
         boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
         boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
         boolean isNewer = timeDelta > 0;
@@ -83,14 +134,14 @@ public class OutdoorLocationService extends Service {
         }
 
         // Check whether the new location fix is more or less accurate
-        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        int accuracyDelta = (int) (location.accuracy - currentBestLocation.accuracy);
         boolean isLessAccurate = accuracyDelta > 0;
         boolean isMoreAccurate = accuracyDelta < 0;
         boolean isSignificantlyLessAccurate = accuracyDelta > 200;
 
         // Check if the old and new location are from the same provider
         boolean isFromSameProvider =
-            isSameProvider(location.getProvider(), currentBestLocation.getProvider());
+            isSameProvider(location.provider, currentBestLocation.provider);
 
         // Determine location quality using a combination of timeliness and accuracy
         if (isMoreAccurate) {
@@ -112,26 +163,35 @@ public class OutdoorLocationService extends Service {
       }
 
       @Override
-      protected void onCancelled(Cursor cursor) {
-        // TODO
+      protected void onCancelled(List<Building> closeBuildings) {
+        mBestLocationTask = null;
+      }
+
+      @Override
+      protected void onPostExecute(List<Building> closeBuildings) {
+        if (closeBuildings != null)
+          BestLocationProvider.this.mCloseBuildings = closeBuildings;
+
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(OutdoorLocationService.this);
+        lbm.sendBroadcast(LocationIntent.NewCloseBuildings.newIntent());
+
+        if (closeBuildings.size() == 1) {
+          List<EntryPoint> epBuilding = closeBuildings.get(0).getEntryPoints();
+          if (epBuilding.size() == 1) {
+            lbm.sendBroadcast(LocationIntent.NewState.newIntent(State.INDOOR.toString()));
+          }
+        }
 
         mBestLocationTask = null;
       }
 
       @Override
-      protected void onPostExecute(Cursor cursor) {
-        // TODO
-
-        mBestLocationTask = null;
-      }
-
-      @Override
-      protected void onProgressUpdate(Location... location) {
-        BestLocationProvider.this.mBestLocation = location[0];
-        if (mListener != null) mListener.onLocationChanged(location[0]);
+      protected void onProgressUpdate(Void... voiz) {
+        BestLocationProvider.this.mBestLocation = mPassthrough;
+        if (mListener != null) mListener.onLocationChanged(mPassthrough);
         LocalBroadcastManager.getInstance(OutdoorLocationService.this).sendBroadcast(
-            LocationIntent.NewLocation.newIntent(location[0].getLatitude(),
-                location[0].getLongitude()));
+            LocationIntent.NewLocation.newIntent(mPassthrough.getLatitude(),
+                mPassthrough.getLongitude()));
       }
     }
 
@@ -147,7 +207,9 @@ public class OutdoorLocationService extends Service {
     //
     private Location mBestLocation;
     //
-    private AsyncTask<Void, Location, Cursor> mBestLocationTask;
+    private AsyncTask<Void, Void, List<Building>> mBestLocationTask;
+    //
+    private List<Building> mCloseBuildings;
     //
     private OnLocationChangedListener mListener;
 
@@ -159,6 +221,14 @@ public class OutdoorLocationService extends Service {
     @Override
     public void deactivate() {
       mListener = null;
+    }
+
+    /**
+     * 
+     * @return
+     */
+    public List<Building> getCloseBuildings() {
+      return mCloseBuildings;
     }
 
     @Override

@@ -9,10 +9,11 @@
         android:layout_height="fill_parent" />
 
     <Button
-        android:layout_width="wrap_content"
+        android:id="@+id/button_entry_points"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:onClick="onButtonEntryPointsClick"
-        android:text="@string/button_entry_points"
+        android:text="@string/button_entry_points_text"
         android:layout_alignParentRight="true"
         android:layout_alignBottom="@id/map_fragment_container" />
 
