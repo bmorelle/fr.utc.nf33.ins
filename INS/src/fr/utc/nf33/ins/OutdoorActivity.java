@@ -54,7 +54,7 @@ public final class OutdoorActivity extends FragmentActivity
     GOOGLE_MAP_OPTIONS.zoomGesturesEnabled(true);
   }
 
-  // Defines callbacks for service binding, passed to bindService().
+  //
   private ServiceConnection mConnection;
   //
   private SupportMapFragment mMapFragment;
