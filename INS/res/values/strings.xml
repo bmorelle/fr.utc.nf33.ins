@@ -10,7 +10,7 @@
     <string name="transition_outdoor">Passage en mode extérieur</string>
     <string name="indoor_text">Mode Indoor !</string>
     <string name="button_entry_points">Entry Points</string>
-    <string name="title_activity_entry_points">Entry Points</string>
+    <string name="title_activity_entry_points">INS: Entry Points</string>
     <string name="hello_world">Hello world!</string>
 
 </resources>
