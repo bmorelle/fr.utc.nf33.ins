@@ -33,8 +33,7 @@ public class IndoorLocationService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.INDOOR));
+    onRebind(intent);
 
     return new LocalBinder();
   }
