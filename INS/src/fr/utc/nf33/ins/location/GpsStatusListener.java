@@ -63,13 +63,13 @@ final class GpsStatusListener implements GpsStatus.Listener {
       newAvgSnr /= SATELLITES_COUNT;
       if (newAvgSnr != 0) mAverageSnr = newAvgSnr;
 
-      LocalBroadcastManager lbMngr = LocalBroadcastManager.getInstance(mContext);
-      lbMngr.sendBroadcast(LocationIntent.NewSnr.newIntent(mAverageSnr));
+      LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
+      lbm.sendBroadcast(LocationIntent.NewSnr.newIntent(mAverageSnr));
 
       if ((mAverageSnr < SNR_THRESHOLD) && (mInitialState != State.INDOOR)) {
-        lbMngr.sendBroadcast(LocationIntent.Transition.newIntent(State.INDOOR.toString()));
+        lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.INDOOR.toString()));
       } else if ((mAverageSnr >= SNR_THRESHOLD) && (mInitialState != State.OUTDOOR)) {
-        lbMngr.sendBroadcast(LocationIntent.Transition.newIntent(State.OUTDOOR.toString()));
+        lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.OUTDOOR.toString()));
       }
     }
   }

@@ -113,6 +113,8 @@ public class OutdoorLocationService extends Service {
 
       @Override
       protected void onCancelled(Cursor cursor) {
+        // TODO
+
         mBestLocationTask = null;
       }
 
@@ -134,6 +136,15 @@ public class OutdoorLocationService extends Service {
     }
 
     //
+    private static final float GPS_MIN_DISTANCE = 10F;
+    //
+    private static final short GPS_MIN_TIME = 3000;
+    //
+    private static final float NETWORK_MIN_DISTANCE = 0F;
+    //
+    private static final short NETWORK_MIN_TIME = 30000;
+
+    //
     private Location mBestLocation;
     //
     private AsyncTask<Void, Location, Cursor> mBestLocationTask;
@@ -152,7 +163,7 @@ public class OutdoorLocationService extends Service {
 
     @Override
     public void onLocationChanged(Location location) {
-      if ((mListener == null) || (mBestLocationTask != null)) return;
+      if (mBestLocationTask != null) return;
       mBestLocationTask = new BestLocationTask(location, mBestLocation);
       mBestLocationTask.execute();
     }
@@ -173,8 +184,21 @@ public class OutdoorLocationService extends Service {
     }
 
     //
-    private void onUnbind() {
+    private void removeLocationUpdates() {
+      LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+      lm.removeUpdates(mBestLocationProvider);
       if (mBestLocationTask != null) mBestLocationTask.cancel(true);
+    }
+
+    //
+    private void requestLocationUpdates() {
+      LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+      if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
+            this);
+      if (lm.getProvider(LocationManager.NETWORK_PROVIDER) != null)
+        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
+            NETWORK_MIN_DISTANCE, this);
     }
   }
 
@@ -188,15 +212,6 @@ public class OutdoorLocationService extends Service {
       return OutdoorLocationService.this;
     }
   }
-
-  //
-  private static final float GPS_MIN_DISTANCE = 10F;
-  //
-  private static final short GPS_MIN_TIME = 3000;
-  //
-  private static final float NETWORK_MIN_DISTANCE = 0F;
-  //
-  private static final short NETWORK_MIN_TIME = 30000;
 
   //
   private BestLocationProvider mBestLocationProvider;
@@ -231,20 +246,14 @@ public class OutdoorLocationService extends Service {
   @Override
   public void onRebind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
-      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
-          mBestLocationProvider);
-    if (lm.getProvider(LocationManager.NETWORK_PROVIDER) != null)
-      lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
-          NETWORK_MIN_DISTANCE, mBestLocationProvider);
+    mBestLocationProvider.requestLocationUpdates();
     lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
   }
 
   @Override
   public boolean onUnbind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    lm.removeUpdates(mBestLocationProvider);
-    mBestLocationProvider.onUnbind();
+    mBestLocationProvider.removeLocationUpdates();
     lm.removeGpsStatusListener(mGpsStatusListener);
     mGpsStatusListener = null;
 
