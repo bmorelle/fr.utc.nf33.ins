@@ -39,9 +39,7 @@ final class GpsStatusListener implements GpsStatus.Listener {
 
   @Override
   public void onGpsStatusChanged(int event) {
-    if (event == GpsStatus.GPS_EVENT_FIRST_FIX) {
-      mFirstFix = true;
-    }
+    if (event == GpsStatus.GPS_EVENT_FIRST_FIX) mFirstFix = true;
 
     if ((event == GpsStatus.GPS_EVENT_STOPPED) && mFirstFix) {
       float[] snrArr = new float[SATELLITES_COUNT];
@@ -66,11 +64,10 @@ final class GpsStatusListener implements GpsStatus.Listener {
       LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(mContext);
       lbm.sendBroadcast(LocationIntent.NewSnr.newIntent(mAverageSnr));
 
-      if ((mAverageSnr < SNR_THRESHOLD) && (mInitialState != State.INDOOR)) {
+      if ((mAverageSnr < SNR_THRESHOLD) && (mInitialState != State.INDOOR))
         lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.INDOOR.toString()));
-      } else if ((mAverageSnr >= SNR_THRESHOLD) && (mInitialState != State.OUTDOOR)) {
+      else if ((mAverageSnr >= SNR_THRESHOLD) && (mInitialState != State.OUTDOOR))
         lbm.sendBroadcast(LocationIntent.Transition.newIntent(State.OUTDOOR.toString()));
-      }
     }
   }
 }
