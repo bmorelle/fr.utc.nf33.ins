@@ -34,7 +34,6 @@ public class OutdoorLocationService extends Service {
 
       //
       private final Location mBestLocation;
-
       //
       private final Location mLocation;
 
@@ -49,6 +48,8 @@ public class OutdoorLocationService extends Service {
         if (!isBetterLocation(mLocation, mBestLocation)) return null;
 
         publishProgress(mLocation);
+
+        // TODO
 
         return null;
       }
@@ -117,6 +118,8 @@ public class OutdoorLocationService extends Service {
 
       @Override
       protected void onPostExecute(Cursor cursor) {
+        // TODO
+
         mBestLocationTask = null;
       }
 
@@ -205,7 +208,6 @@ public class OutdoorLocationService extends Service {
 
   //
   private BestLocationProvider mBestLocationProvider;
-
   //
   private GpsStatusListener mGpsStatusListener;
 

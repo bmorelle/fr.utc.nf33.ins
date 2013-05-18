@@ -25,10 +25,8 @@ import fr.utc.nf33.ins.location.State;
 public class IndoorActivity extends Activity {
   //
   private ServiceConnection mConnection;
-
   //
   private BroadcastReceiver mNewSnrReceiver;
-
   //
   private BroadcastReceiver mTransitionReceiver;
 

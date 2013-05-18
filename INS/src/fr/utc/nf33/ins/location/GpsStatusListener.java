@@ -17,19 +17,15 @@ import android.support.v4.content.LocalBroadcastManager;
 final class GpsStatusListener implements GpsStatus.Listener {
   //
   private float mAverageSnr;
-
   //
   private final Context mContext;
-
   //
   private boolean mFirstFix;
-
   //
   private final State mInitialState;
 
   //
   private final byte SATELLITES_COUNT = 3;
-
   //
   private final byte SNR_THRESHOLD = 35;
 

@@ -56,16 +56,12 @@ public final class OutdoorActivity extends FragmentActivity
 
   // Defines callbacks for service binding, passed to bindService().
   private ServiceConnection mConnection;
-
   //
   private SupportMapFragment mMapFragment;
-
   //
   private BroadcastReceiver mNewLocationReceiver;
-
   //
   private BroadcastReceiver mNewSnrReceiver;
-
   //
   private BroadcastReceiver mTransitionReceiver;
 
@@ -151,7 +147,7 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, mConnection, 0);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
