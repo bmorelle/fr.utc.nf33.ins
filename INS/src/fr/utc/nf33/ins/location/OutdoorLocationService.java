@@ -126,21 +126,12 @@ public class OutdoorLocationService extends Service {
       @Override
       protected void onProgressUpdate(Location... location) {
         BestLocationProvider.this.mBestLocation = location[0];
-        mListener.onLocationChanged(location[0]);
+        if (mListener != null) mListener.onLocationChanged(location[0]);
         LocalBroadcastManager.getInstance(OutdoorLocationService.this).sendBroadcast(
             LocationIntent.NewLocation.newIntent(location[0].getLatitude(),
                 location[0].getLongitude()));
       }
     }
-
-    //
-    private static final float GPS_MIN_DISTANCE = 10F;
-    //
-    private static final short GPS_MIN_TIME = 3000;
-    //
-    private static final float NETWORK_MIN_DISTANCE = 0F;
-    //
-    private static final short NETWORK_MIN_TIME = 30000;
 
     //
     private Location mBestLocation;
@@ -152,19 +143,11 @@ public class OutdoorLocationService extends Service {
     @Override
     public void activate(OnLocationChangedListener listener) {
       mListener = listener;
-
-      LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-      if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
-            this);
-      if (lm.getProvider(LocationManager.NETWORK_PROVIDER) != null)
-        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
-            NETWORK_MIN_DISTANCE, this);
     }
 
     @Override
     public void deactivate() {
-
+      mListener = null;
     }
 
     @Override
@@ -207,6 +190,15 @@ public class OutdoorLocationService extends Service {
   }
 
   //
+  private static final float GPS_MIN_DISTANCE = 10F;
+  //
+  private static final short GPS_MIN_TIME = 3000;
+  //
+  private static final float NETWORK_MIN_DISTANCE = 0F;
+  //
+  private static final short NETWORK_MIN_TIME = 30000;
+
+  //
   private BestLocationProvider mBestLocationProvider;
   //
   private GpsStatusListener mGpsStatusListener;
@@ -221,8 +213,7 @@ public class OutdoorLocationService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
+    onRebind(intent);
 
     return new LocalBinder();
   }
@@ -240,6 +231,12 @@ public class OutdoorLocationService extends Service {
   @Override
   public void onRebind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
+      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
+          mBestLocationProvider);
+    if (lm.getProvider(LocationManager.NETWORK_PROVIDER) != null)
+      lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, NETWORK_MIN_TIME,
+          NETWORK_MIN_DISTANCE, mBestLocationProvider);
     lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
   }
 
