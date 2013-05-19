@@ -33,7 +33,7 @@ final class GpsStatusListener implements GpsStatus.Listener {
   GpsStatusListener(Context context, State state) {
     mContext = context;
     mState = state;
-    mAverageSnr = 0F;
+    mAverageSnr = Float.MAX_VALUE;
     mFirstFix = false;
   }
 
