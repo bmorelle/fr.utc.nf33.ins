@@ -6,6 +6,7 @@ package fr.utc.nf33.ins.location;
 import java.util.List;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -28,7 +29,7 @@ import fr.utc.nf33.ins.db.InsDbHelper;
  * @author
  * 
  */
-public class OutdoorLocationService extends Service {
+public final class CloseBuildingsService extends Service {
   //
   public final class BestLocationProvider implements LocationSource, LocationListener {
     //
@@ -69,22 +70,22 @@ public class OutdoorLocationService extends Service {
       private final Location mPassthrough;
 
       //
-      private BestLocationTask(Location location, Location bestLocation) {
+      private BestLocationTask(Location location, Location bestLocation, float averageSnr) {
         mPassthrough = location;
         mLocation = new LocationPlaceholder(location);
         if (bestLocation != null) mBestLocation = new LocationPlaceholder(bestLocation);
-        mAverageSnr = mGpsStatusListener.getAverageSnr();
+        mAverageSnr = averageSnr;
       }
 
       @Override
-      protected List<Building> doInBackground(Void... params) {
+      protected final List<Building> doInBackground(Void... params) {
         if (!isBetterLocation(mLocation, mBestLocation)) return null;
 
         mBestLocation = mLocation;
         publishProgress();
 
-        if (mAverageSnr < GpsStatusListener.SNR_THRESHOLD) {
-          InsDbHelper dbHelper = new InsDbHelper(OutdoorLocationService.this);
+        if (mAverageSnr < LocationHelper.SNR_THRESHOLD) {
+          InsDbHelper dbHelper = new InsDbHelper(CloseBuildingsService.this);
 
           Cursor cursor = dbHelper.getEntryPoints();
           if (isCancelled()) {
@@ -111,7 +112,7 @@ public class OutdoorLocationService extends Service {
        * @param currentBestLocation The current Location fix, to which you want to compare the new
        *        one
        */
-      private boolean isBetterLocation(LocationPlaceholder location,
+      private final boolean isBetterLocation(LocationPlaceholder location,
           LocationPlaceholder currentBestLocation) {
         if (currentBestLocation == null) {
           // A new location is always better than no location
@@ -155,7 +156,7 @@ public class OutdoorLocationService extends Service {
       }
 
       // Checks whether two providers are the same.
-      private boolean isSameProvider(String provider1, String provider2) {
+      private final boolean isSameProvider(String provider1, String provider2) {
         if (provider1 == null)
           return provider2 == null;
         else
@@ -163,33 +164,25 @@ public class OutdoorLocationService extends Service {
       }
 
       @Override
-      protected void onCancelled(List<Building> closeBuildings) {
+      protected final void onCancelled(List<Building> closeBuildings) {
         mBestLocationTask = null;
       }
 
       @Override
-      protected void onPostExecute(List<Building> closeBuildings) {
-        if (closeBuildings != null)
-          BestLocationProvider.this.mCloseBuildings = closeBuildings;
+      protected final void onPostExecute(List<Building> closeBuildings) {
+        if (closeBuildings != null) BestLocationProvider.this.mCloseBuildings = closeBuildings;
 
-        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(OutdoorLocationService.this);
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(CloseBuildingsService.this);
         lbm.sendBroadcast(LocationIntent.NewCloseBuildings.newIntent());
 
-        if (closeBuildings.size() == 1) {
-          List<EntryPoint> epBuilding = closeBuildings.get(0).getEntryPoints();
-          if (epBuilding.size() == 1) {
-            lbm.sendBroadcast(LocationIntent.NewState.newIntent(State.INDOOR.toString()));
-          }
-        }
-
         mBestLocationTask = null;
       }
 
       @Override
-      protected void onProgressUpdate(Void... voiz) {
+      protected final void onProgressUpdate(Void... voiz) {
         BestLocationProvider.this.mBestLocation = mPassthrough;
         if (mListener != null) mListener.onLocationChanged(mPassthrough);
-        LocalBroadcastManager.getInstance(OutdoorLocationService.this).sendBroadcast(
+        LocalBroadcastManager.getInstance(CloseBuildingsService.this).sendBroadcast(
             LocationIntent.NewLocation.newIntent(mPassthrough.getLatitude(),
                 mPassthrough.getLongitude()));
       }
@@ -205,6 +198,8 @@ public class OutdoorLocationService extends Service {
     private static final short NETWORK_MIN_TIME = 30000;
 
     //
+    private float mAverageSnr;
+    //
     private Location mBestLocation;
     //
     private AsyncTask<Void, Void, List<Building>> mBestLocationTask;
@@ -214,54 +209,46 @@ public class OutdoorLocationService extends Service {
     private OnLocationChangedListener mListener;
 
     @Override
-    public void activate(OnLocationChangedListener listener) {
+    public final void activate(OnLocationChangedListener listener) {
       mListener = listener;
     }
 
     @Override
-    public void deactivate() {
+    public final void deactivate() {
       mListener = null;
     }
 
-    /**
-     * 
-     * @return
-     */
-    public List<Building> getCloseBuildings() {
-      return mCloseBuildings;
-    }
-
     @Override
-    public void onLocationChanged(Location location) {
+    public final void onLocationChanged(Location location) {
       if (mBestLocationTask != null) return;
-      mBestLocationTask = new BestLocationTask(location, mBestLocation);
+      mBestLocationTask = new BestLocationTask(location, mBestLocation, mAverageSnr);
       mBestLocationTask.execute();
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public final void onProviderDisabled(String provider) {
 
     }
 
     @Override
-    public void onProviderEnabled(String provider) {
+    public final void onProviderEnabled(String provider) {
 
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
+    public final void onStatusChanged(String provider, int status, Bundle extras) {
 
     }
 
     //
-    private void removeLocationUpdates() {
+    private final void removeLocationUpdates() {
       LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
       lm.removeUpdates(mBestLocationProvider);
       if (mBestLocationTask != null) mBestLocationTask.cancel(true);
     }
 
     //
-    private void requestLocationUpdates() {
+    private final void requestLocationUpdates() {
       LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
       if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_MIN_TIME, GPS_MIN_DISTANCE,
@@ -276,56 +263,78 @@ public class OutdoorLocationService extends Service {
    * Class used for the client Binder. Because we know this service always runs in the same process
    * as its clients, we don't need to deal with IPC.
    */
-  public class LocalBinder extends Binder {
-    public OutdoorLocationService getService() {
+  public final class LocalBinder extends Binder {
+    public CloseBuildingsService getService() {
       // Return this instance of LocationService so that clients can call public methods.
-      return OutdoorLocationService.this;
+      return CloseBuildingsService.this;
     }
   }
 
   //
   private BestLocationProvider mBestLocationProvider;
   //
-  private GpsStatusListener mGpsStatusListener;
+  private BroadcastReceiver mNewSnrReceiver;
 
   /**
    * 
    * @return
    */
-  public BestLocationProvider getBestLocationProvider() {
+  public final BestLocationProvider getBestLocationProvider() {
     return mBestLocationProvider;
   }
 
+  /**
+   * 
+   * @return
+   */
+  public final List<Building> getCloseBuildings() {
+    return mBestLocationProvider.mCloseBuildings;
+  }
+
   @Override
-  public IBinder onBind(Intent intent) {
+  public final IBinder onBind(Intent intent) {
     onRebind(intent);
 
     return new LocalBinder();
   }
 
   @Override
-  public void onCreate() {
+  public final void onCreate() {
     mBestLocationProvider = new BestLocationProvider();
   }
 
   @Override
-  public void onDestroy() {
+  public final void onDestroy() {
     mBestLocationProvider = null;
   }
 
   @Override
-  public void onRebind(Intent intent) {
-    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+  public final void onRebind(Intent intent) {
+    // Register receivers.
+    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+
+    mNewSnrReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        mBestLocationProvider.mAverageSnr =
+            intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
+      }
+    };
+    lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
+
+    //
     mBestLocationProvider.requestLocationUpdates();
-    lm.addGpsStatusListener(mGpsStatusListener = new GpsStatusListener(this, State.OUTDOOR));
   }
 
   @Override
-  public boolean onUnbind(Intent intent) {
-    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+  public final boolean onUnbind(Intent intent) {
+    //
     mBestLocationProvider.removeLocationUpdates();
-    lm.removeGpsStatusListener(mGpsStatusListener);
-    mGpsStatusListener = null;
+
+    // Unregister receivers.
+    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+    lbm.unregisterReceiver(mNewSnrReceiver);
+    mNewSnrReceiver = null;
 
     return true;
   }

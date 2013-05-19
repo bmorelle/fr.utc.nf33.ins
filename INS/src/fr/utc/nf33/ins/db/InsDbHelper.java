@@ -13,7 +13,7 @@ import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
  * @author
  * 
  */
-public class InsDbHelper extends SQLiteAssetHelper {
+public final class InsDbHelper extends SQLiteAssetHelper {
   //
   private static final String DATABASE_NAME = "ins";
   //

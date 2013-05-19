@@ -67,7 +67,7 @@ public final class Building {
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return "Building [mName=" + mName + ", mEntryPoints=" + mEntryPoints + "]";
   }
 }

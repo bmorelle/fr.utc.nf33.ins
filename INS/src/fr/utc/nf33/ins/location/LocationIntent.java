@@ -138,48 +138,6 @@ public final class LocationIntent {
     }
   }
 
-  /**
-   * 
-   * @author
-   * 
-   */
-  public static final class NewState {
-    /**
-     * 
-     */
-    public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_STATE";
-
-    /**
-     * 
-     */
-    public static final String EXTRA_STATE = "fr.utc.nf33.ins.STATE";
-
-    /**
-     * 
-     * @param newState
-     * @return
-     */
-    public static final Intent newIntent(String newState) {
-      Intent intent = new Intent(ACTION_NAME);
-      intent.putExtra(EXTRA_STATE, newState);
-
-      return intent;
-    }
-
-    /**
-     * 
-     * @return
-     */
-    public static final IntentFilter newIntentFilter() {
-      return new IntentFilter(ACTION_NAME);
-    }
-
-    // Suppress default constructor for noninstantiability.
-    private NewState() {
-
-    }
-  }
-
   // Suppress default constructor for noninstantiability.
   private LocationIntent() {
 

@@ -13,36 +13,35 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.TextView;
-import fr.utc.nf33.ins.location.IndoorLocationService;
+import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
-import fr.utc.nf33.ins.location.State;
+import fr.utc.nf33.ins.location.SnrService;
 
 /**
  * 
  * @author
  * 
  */
-public class IndoorActivity extends Activity {
+public final class IndoorActivity extends Activity {
   //
-  private ServiceConnection mConnection;
+  private ServiceConnection mSnrConnection;
   //
   private BroadcastReceiver mNewSnrReceiver;
-  //
-  private BroadcastReceiver mNewStateReceiver;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected final void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
     setContentView(R.layout.activity_indoor);
   }
 
   @Override
-  protected void onStart() {
+  protected final void onStart() {
     super.onStart();
 
-    // Connect to the Indoor Location Service.
-    Intent intent = new Intent(this, IndoorLocationService.class);
-    mConnection = new ServiceConnection() {
+    // Connect to the SNR Service.
+    Intent intent = new Intent(this, SnrService.class);
+    mSnrConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
 
@@ -53,7 +52,7 @@ public class IndoorActivity extends Activity {
 
       }
     };
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -64,42 +63,25 @@ public class IndoorActivity extends Activity {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
             + Float.toString(snr));
+
+        if (LocationHelper.shouldGoOutdoor(snr))
+          startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));
       }
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
-
-    mNewStateReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        State newState =
-            State.valueOf(intent.getStringExtra(LocationIntent.NewState.EXTRA_STATE));
-        switch (newState) {
-          case OUTDOOR:
-            startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));
-            break;
-          case INDOOR:
-            break;
-          default:
-            throw new IllegalStateException("Unhandled Application State.");
-        }
-      }
-    };
-    lbm.registerReceiver(mNewStateReceiver, LocationIntent.NewState.newIntentFilter());
   }
 
   @Override
-  protected void onStop() {
+  protected final void onStop() {
     super.onStop();
 
-    // Disconnect from the Indoor Location Service.
-    unbindService(mConnection);
-    mConnection = null;
+    // Disconnect from the SNR Service.
+    unbindService(mSnrConnection);
+    mSnrConnection = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
-    lbm.unregisterReceiver(mNewStateReceiver);
-    mNewStateReceiver = null;
   }
 }

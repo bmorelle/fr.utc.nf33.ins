@@ -3,6 +3,8 @@
  */
 package fr.utc.nf33.ins;
 
+import java.util.List;
+
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -12,44 +14,42 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.widget.Toast;
+import fr.utc.nf33.ins.location.Building;
+import fr.utc.nf33.ins.location.CloseBuildingsService;
+import fr.utc.nf33.ins.location.CloseBuildingsService.LocalBinder;
+import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
-import fr.utc.nf33.ins.location.OutdoorLocationService;
-import fr.utc.nf33.ins.location.OutdoorLocationService.LocalBinder;
-import fr.utc.nf33.ins.location.State;
 
 /**
  * 
  * @author
  * 
  */
-public class EntryPointsActivity extends ListActivity {
+public final class EntryPointsActivity extends ListActivity {
   //
-  private ServiceConnection mConnection;
+  private ServiceConnection mCloseBuildingsConnection;
+  //
+  private CloseBuildingsService mCloseBuildingsService;
   //
   private BroadcastReceiver mNewCloseBuildingsReceiver;
-  //
-  private BroadcastReceiver mNewStateReceiver;
-  //
-  private OutdoorLocationService mService;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected final void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_entry_points);
   }
 
   @Override
-  protected void onStart() {
+  protected final void onStart() {
     super.onStart();
 
-    // Connect to the Outdoor Location Service.
-    Intent intent = new Intent(this, OutdoorLocationService.class);
-    mConnection = new ServiceConnection() {
+    // Connect to the Close Buildings Service.
+    Intent intent = new Intent(this, CloseBuildingsService.class);
+    mCloseBuildingsConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
-        mService = ((LocalBinder) service).getService();
+        mCloseBuildingsService = ((LocalBinder) service).getService();
       }
 
       @Override
@@ -57,7 +57,7 @@ public class EntryPointsActivity extends ListActivity {
 
       }
     };
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -65,45 +65,27 @@ public class EntryPointsActivity extends ListActivity {
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-
+        List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
+        if (LocationHelper.shouldGoIndoor(closeBuildings))
+          startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
         LocationIntent.NewCloseBuildings.newIntentFilter());
-
-    mNewStateReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        State newState = State.valueOf(intent.getStringExtra(LocationIntent.NewState.EXTRA_STATE));
-        switch (newState) {
-          case INDOOR:
-            // startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
-            Toast.makeText(EntryPointsActivity.this, "indoor", Toast.LENGTH_SHORT).show();
-            break;
-          case OUTDOOR:
-            break;
-          default:
-            throw new IllegalStateException("Unhandled Application State.");
-        }
-      }
-    };
-    lbm.registerReceiver(mNewStateReceiver, LocationIntent.NewState.newIntentFilter());
   }
 
   @Override
-  protected void onStop() {
+  protected final void onStop() {
     super.onStop();
 
-    // Disconnect from the Outdoor Location Service.
-    unbindService(mConnection);
-    mConnection = null;
-    mService = null;
+    // Disconnect from the Close Buildings Service.
+    unbindService(mCloseBuildingsConnection);
+    mCloseBuildingsConnection = null;
+    mCloseBuildingsService = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
     lbm.unregisterReceiver(mNewCloseBuildingsReceiver);
     mNewCloseBuildingsReceiver = null;
-    lbm.unregisterReceiver(mNewStateReceiver);
-    mNewStateReceiver = null;
   }
 }

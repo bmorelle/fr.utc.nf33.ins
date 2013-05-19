@@ -15,11 +15,13 @@ import android.database.Cursor;
  * @author
  * 
  */
-final class LocationHelper {
+public final class LocationHelper {
   //
   private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
   //
   private static final double RADIUS_OF_THE_EARTH = 6371.009;
+  //
+  public static final byte SNR_THRESHOLD = 35;
   //
   private static final double SQUARED_MAX_DISTANCE = 100.0;
   //
@@ -97,6 +99,26 @@ final class LocationHelper {
     });
 
     return closeBuildings;
+  }
+
+  /**
+   * 
+   * @param closeBuildings
+   * @return
+   */
+  public static final boolean shouldGoIndoor(List<Building> closeBuildings) {
+    if (closeBuildings.size() != 1) return false;
+
+    return closeBuildings.get(0).getEntryPoints().size() == 1;
+  }
+
+  /**
+   * 
+   * @param snr
+   * @return
+   */
+  public static final boolean shouldGoOutdoor(float snr) {
+    return snr >= SNR_THRESHOLD;
   }
 
   /**

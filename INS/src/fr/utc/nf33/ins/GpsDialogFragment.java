@@ -14,7 +14,7 @@ import android.util.Log;
 /**
  *
  */
-public class GpsDialogFragment extends DialogFragment {
+public final class GpsDialogFragment extends DialogFragment {
   /*
    * The activity that creates an instance of this dialog fragment must implement this interface in
    * order to receive event callbacks. Each method passes the DialogFragment in case the host needs
@@ -47,7 +47,7 @@ public class GpsDialogFragment extends DialogFragment {
 
   // Override the Fragment.onAttach() method to instantiate the GpsDialogListener.
   @Override
-  public void onAttach(Activity activity) {
+  public final void onAttach(Activity activity) {
     super.onAttach(activity);
 
     // Verify that the host activity implements the callback interface.
@@ -62,7 +62,7 @@ public class GpsDialogFragment extends DialogFragment {
   }
 
   @Override
-  public Dialog onCreateDialog(Bundle savedInstanceState) {
+  public final Dialog onCreateDialog(Bundle savedInstanceState) {
     // Build the dialog and set up the button click handlers.
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     builder

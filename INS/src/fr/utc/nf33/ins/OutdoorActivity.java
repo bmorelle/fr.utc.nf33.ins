@@ -22,7 +22,6 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,10 +30,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
 import fr.utc.nf33.ins.location.Building;
+import fr.utc.nf33.ins.location.CloseBuildingsService;
+import fr.utc.nf33.ins.location.CloseBuildingsService.LocalBinder;
+import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
-import fr.utc.nf33.ins.location.OutdoorLocationService;
-import fr.utc.nf33.ins.location.OutdoorLocationService.LocalBinder;
-import fr.utc.nf33.ins.location.State;
+import fr.utc.nf33.ins.location.SnrService;
 
 /**
  * 
@@ -59,7 +59,9 @@ public final class OutdoorActivity extends FragmentActivity
   }
 
   //
-  private ServiceConnection mConnection;
+  private ServiceConnection mCloseBuildingsConnection;
+  //
+  private CloseBuildingsService mCloseBuildingsService;
   //
   private SupportMapFragment mMapFragment;
   //
@@ -69,12 +71,10 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private BroadcastReceiver mNewSnrReceiver;
   //
-  private BroadcastReceiver mNewStateReceiver;
-  //
-  private OutdoorLocationService mService;
+  private ServiceConnection mSnrConnection;
 
   @Override
-  public void onBackPressed() {
+  public final void onBackPressed() {
 
   }
 
@@ -83,13 +83,14 @@ public final class OutdoorActivity extends FragmentActivity
    * 
    * @param view
    */
-  public void onButtonEntryPointsClick(View view) {
+  public final void onButtonEntryPointsClick(View view) {
     startActivity(new Intent(this, EntryPointsActivity.class));
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected final void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
     setContentView(R.layout.activity_outdoor);
 
     // Create a Google Map Fragment with desired options.
@@ -98,35 +99,43 @@ public final class OutdoorActivity extends FragmentActivity
     fragmentTransaction.add(R.id.activity_outdoor_map, mMapFragment);
     fragmentTransaction.commit();
 
-    // Start the Outdoor Location Service.
-    Intent intent = new Intent(this, OutdoorLocationService.class);
+    // Start the SNR Service.
+    Intent intent = new Intent(this, SnrService.class);
+    startService(intent);
+
+    // Start the Close Buildings Service.
+    intent = new Intent(this, CloseBuildingsService.class);
     startService(intent);
   }
 
   @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
+  public final boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu; this adds items to the action bar if it is present.
     getMenuInflater().inflate(R.menu.main, menu);
     return true;
   }
 
   @Override
-  protected void onDestroy() {
+  protected final void onDestroy() {
     super.onDestroy();
 
-    // Stop the Outdoor Location Service.
-    Intent intent = new Intent(this, OutdoorLocationService.class);
+    // Stop the Close Buildings Service.
+    Intent intent = new Intent(this, CloseBuildingsService.class);
+    stopService(intent);
+
+    // Stop the SNR Service.
+    intent = new Intent(this, SnrService.class);
     stopService(intent);
   }
 
   @Override
-  public void onGpsDialogPositiveClick(DialogFragment dialog) {
+  public final void onGpsDialogPositiveClick(DialogFragment dialog) {
     Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
     startActivity(settingsIntent);
   }
 
   @Override
-  protected void onStart() {
+  protected final void onStart() {
     super.onStart();
 
     // Check whether the GPS provider is enabled.
@@ -140,14 +149,12 @@ public final class OutdoorActivity extends FragmentActivity
     GoogleMap map = mMapFragment.getMap();
     map.setMyLocationEnabled(true);
 
-    // Connect to the Outdoor Location Service.
-    Intent intent = new Intent(this, OutdoorLocationService.class);
-    mConnection = new ServiceConnection() {
+    // Connect to the SNR Service.
+    Intent intent = new Intent(this, SnrService.class);
+    mSnrConnection = new ServiceConnection() {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
-        // We've bound to LocationService, cast the IBinder and get LocationService instance.
-        mService = ((LocalBinder) service).getService();
-        mMapFragment.getMap().setLocationSource(mService.getBestLocationProvider());
+
       }
 
       @Override
@@ -155,7 +162,24 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
+
+    // Connect to the Close Buildings Service.
+    intent = new Intent(this, CloseBuildingsService.class);
+    mCloseBuildingsConnection = new ServiceConnection() {
+      @Override
+      public void onServiceConnected(ComponentName name, IBinder service) {
+        // We've bound to CloseBuildingsService, cast the IBinder and get LocationService instance.
+        mCloseBuildingsService = ((LocalBinder) service).getService();
+        mMapFragment.getMap().setLocationSource(mCloseBuildingsService.getBestLocationProvider());
+      }
+
+      @Override
+      public void onServiceDisconnected(ComponentName name) {
+
+      }
+    };
+    bindService(intent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -163,9 +187,11 @@ public final class OutdoorActivity extends FragmentActivity
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        List<Building> closeBuildings = mService.getBestLocationProvider().getCloseBuildings();
+        List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
         ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
             .setText(Integer.toString(closeBuildings.size()));
+        if (LocationHelper.shouldGoIndoor(closeBuildings))
+          startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
@@ -191,34 +217,20 @@ public final class OutdoorActivity extends FragmentActivity
       }
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
-
-    mNewStateReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        State newState = State.valueOf(intent.getStringExtra(LocationIntent.NewState.EXTRA_STATE));
-        switch (newState) {
-          case INDOOR:
-            // startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
-            Toast.makeText(OutdoorActivity.this, "indoor", Toast.LENGTH_SHORT).show();
-            break;
-          case OUTDOOR:
-            break;
-          default:
-            throw new IllegalStateException("Unhandled Application State.");
-        }
-      }
-    };
-    lbm.registerReceiver(mNewStateReceiver, LocationIntent.NewState.newIntentFilter());
   }
 
   @Override
-  protected void onStop() {
+  protected final void onStop() {
     super.onStop();
 
-    // Disconnect from the Outdoor Location Service.
-    unbindService(mConnection);
-    mConnection = null;
-    mService = null;
+    // Disconnect from the Close Buildings Service.
+    unbindService(mCloseBuildingsConnection);
+    mCloseBuildingsConnection = null;
+    mCloseBuildingsService = null;
+
+    // Disconnect from the SNR Service.
+    unbindService(mSnrConnection);
+    mSnrConnection = null;
 
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -228,7 +240,5 @@ public final class OutdoorActivity extends FragmentActivity
     mNewLocationReceiver = null;
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
-    lbm.unregisterReceiver(mNewStateReceiver);
-    mNewStateReceiver = null;
   }
 }
