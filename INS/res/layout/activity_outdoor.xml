@@ -4,25 +4,25 @@
     android:layout_height="fill_parent" >
 
     <FrameLayout
-        android:id="@+id/map_fragment_container"
+        android:id="@+id/activity_outdoor_map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
     <Button
-        android:id="@+id/button_entry_points"
+        android:id="@+id/activity_outdoor_button_entry_points"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:onClick="onButtonEntryPointsClick"
-        android:text="@string/activity_outdoor_button_entry_points_text"
+        android:layout_alignBottom="@id/activity_outdoor_map"
         android:layout_alignParentRight="true"
-        android:layout_alignBottom="@id/map_fragment_container" />
+        android:onClick="onButtonEntryPointsClick"
+        android:text="@string/activity_outdoor_button_entry_points_text" />
 
     <TextView
-        android:id="@+id/outdoorSNR"
+        android:id="@+id/activity_outdoor_textview_snr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textIsSelectable="false"
+        android:layout_alignBottom="@id/activity_outdoor_map"
         android:layout_alignParentLeft="true"
-        android:layout_alignBottom="@id/map_fragment_container" />
+        android:textIsSelectable="false" />
 
 </RelativeLayout>

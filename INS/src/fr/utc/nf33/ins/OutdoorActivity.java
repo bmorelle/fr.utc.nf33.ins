@@ -95,7 +95,7 @@ public final class OutdoorActivity extends FragmentActivity
     // Create a Google Map Fragment with desired options.
     mMapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-    fragmentTransaction.add(R.id.map_fragment_container, mMapFragment);
+    fragmentTransaction.add(R.id.activity_outdoor_map, mMapFragment);
     fragmentTransaction.commit();
 
     // Start the Outdoor Location Service.
@@ -164,8 +164,8 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onReceive(Context context, Intent intent) {
         List<Building> closeBuildings = mService.getBestLocationProvider().getCloseBuildings();
-        ((Button) OutdoorActivity.this.findViewById(R.id.button_entry_points)).setText(Integer
-            .toString(closeBuildings.size()));
+        ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
+            .setText(Integer.toString(closeBuildings.size()));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
@@ -186,7 +186,7 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
-        ((TextView) OutdoorActivity.this.findViewById(R.id.outdoorSNR))
+        ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_textview_snr))
             .setText("SNR (3 premiers): " + Float.toString(snr));
       }
     };
