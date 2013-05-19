@@ -19,7 +19,7 @@
 
     <TextView
         android:id="@+id/activity_outdoor_textview_snr"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@id/activity_outdoor_map"
         android:layout_alignParentLeft="true"

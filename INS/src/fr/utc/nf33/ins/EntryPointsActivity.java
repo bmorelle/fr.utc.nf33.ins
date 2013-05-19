@@ -14,6 +14,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.widget.ArrayAdapter;
 import fr.utc.nf33.ins.location.Building;
 import fr.utc.nf33.ins.location.CloseBuildingsService;
 import fr.utc.nf33.ins.location.CloseBuildingsService.LocalBinder;
@@ -50,6 +51,11 @@ public final class EntryPointsActivity extends ListActivity {
       @Override
       public void onServiceConnected(ComponentName name, IBinder service) {
         mCloseBuildingsService = ((LocalBinder) service).getService();
+
+        List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        if (buildings == null) return;
+        setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
+            R.id.entry_points_list_item_text, buildings.toArray(new Building[0])));
       }
 
       @Override
@@ -66,6 +72,8 @@ public final class EntryPointsActivity extends ListActivity {
       @Override
       public void onReceive(Context context, Intent intent) {
         List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
+        setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
+            R.id.entry_points_list_item_text, closeBuildings.toArray(new Building[0])));
         if (LocationHelper.shouldGoIndoor(closeBuildings))
           startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
       }
