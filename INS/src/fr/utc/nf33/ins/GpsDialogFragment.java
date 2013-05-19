@@ -65,13 +65,16 @@ public class GpsDialogFragment extends DialogFragment {
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     // Build the dialog and set up the button click handlers.
     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setTitle(R.string.gps_dialog_title).setMessage(R.string.gps_dialog_content)
-        .setPositiveButton(R.string.gps_dialog_ok, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int id) {
-            mListener.onGpsDialogPositiveClick(GpsDialogFragment.this);
-          }
-        });
+    builder
+        .setTitle(R.string.gps_dialog_title)
+        .setMessage(R.string.gps_dialog_message)
+        .setPositiveButton(R.string.gps_dialog_button_positive,
+            new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int id) {
+                mListener.onGpsDialogPositiveClick(GpsDialogFragment.this);
+              }
+            });
     return builder.create();
   }
 }

@@ -9,7 +9,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="9"
-        android:text="@string/indoor_text"
+        android:text="@string/activity_indoor_text"
         android:textIsSelectable="false" />
 
     <TextView
