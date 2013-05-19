@@ -71,7 +71,7 @@ public final class GpsDialogFragment extends DialogFragment {
         .setPositiveButton(R.string.gps_dialog_button_positive,
             new DialogInterface.OnClickListener() {
               @Override
-              public void onClick(DialogInterface dialog, int id) {
+              public final void onClick(DialogInterface dialog, int id) {
                 mListener.onGpsDialogPositiveClick(GpsDialogFragment.this);
               }
             });

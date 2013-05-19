@@ -49,7 +49,7 @@ public final class EntryPointsActivity extends ListActivity {
     Intent intent = new Intent(this, CloseBuildingsService.class);
     mCloseBuildingsConnection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName name, IBinder service) {
+      public final void onServiceConnected(ComponentName name, IBinder service) {
         mCloseBuildingsService = ((LocalBinder) service).getService();
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
@@ -59,7 +59,7 @@ public final class EntryPointsActivity extends ListActivity {
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName name) {
+      public final void onServiceDisconnected(ComponentName name) {
 
       }
     };
@@ -70,7 +70,7 @@ public final class EntryPointsActivity extends ListActivity {
 
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
             R.id.entry_points_list_item_text, closeBuildings.toArray(new Building[0])));

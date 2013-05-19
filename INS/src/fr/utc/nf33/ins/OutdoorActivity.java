@@ -153,12 +153,12 @@ public final class OutdoorActivity extends FragmentActivity
     Intent intent = new Intent(this, SnrService.class);
     mSnrConnection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName name, IBinder service) {
+      public final void onServiceConnected(ComponentName name, IBinder service) {
 
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName name) {
+      public final void onServiceDisconnected(ComponentName name) {
 
       }
     };
@@ -168,14 +168,14 @@ public final class OutdoorActivity extends FragmentActivity
     intent = new Intent(this, CloseBuildingsService.class);
     mCloseBuildingsConnection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName name, IBinder service) {
+      public final void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to CloseBuildingsService, cast the IBinder and get LocationService instance.
         mCloseBuildingsService = ((LocalBinder) service).getService();
         mMapFragment.getMap().setLocationSource(mCloseBuildingsService.getBestLocationProvider());
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName name) {
+      public final void onServiceDisconnected(ComponentName name) {
 
       }
     };
@@ -186,7 +186,7 @@ public final class OutdoorActivity extends FragmentActivity
 
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
         ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
             .setText(Integer.toString(closeBuildings.size()));
@@ -199,7 +199,7 @@ public final class OutdoorActivity extends FragmentActivity
 
     mNewLocationReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         double lat = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LATITUDE, 0);
         double lon = intent.getDoubleExtra(LocationIntent.NewLocation.EXTRA_LONGITUDE, 0);
         mMapFragment.getMap().animateCamera(
@@ -210,7 +210,7 @@ public final class OutdoorActivity extends FragmentActivity
 
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_textview_snr))
             .setText("SNR (3 premiers): " + Float.toString(snr));

@@ -66,7 +66,7 @@ public final class LocationHelper {
       List<EntryPoint> entryPoints = b.getEntryPoints();
       Collections.sort(entryPoints, new Comparator<EntryPoint>() {
         @Override
-        public int compare(EntryPoint lhs, EntryPoint rhs) {
+        public final int compare(EntryPoint lhs, EntryPoint rhs) {
           double lhsSqDist =
               squaredDistanceBetween(latitude, longitude, lhs.getLatitude(), lhs.getLongitude());
           double rhsSqDist =
@@ -82,7 +82,7 @@ public final class LocationHelper {
     }
     Collections.sort(closeBuildings, new Comparator<Building>() {
       @Override
-      public int compare(Building lhs, Building rhs) {
+      public final int compare(Building lhs, Building rhs) {
         double lhsSqDist =
             squaredDistanceBetween(latitude, longitude, lhs.getEntryPoints().get(0).getLatitude(),
                 lhs.getEntryPoints().get(0).getLongitude());

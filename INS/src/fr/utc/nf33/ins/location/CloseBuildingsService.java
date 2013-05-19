@@ -315,7 +315,7 @@ public final class CloseBuildingsService extends Service {
 
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         mBestLocationProvider.mAverageSnr =
             intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
       }

@@ -43,12 +43,12 @@ public final class IndoorActivity extends Activity {
     Intent intent = new Intent(this, SnrService.class);
     mSnrConnection = new ServiceConnection() {
       @Override
-      public void onServiceConnected(ComponentName name, IBinder service) {
+      public final void onServiceConnected(ComponentName name, IBinder service) {
 
       }
 
       @Override
-      public void onServiceDisconnected(ComponentName name) {
+      public final void onServiceDisconnected(ComponentName name) {
 
       }
     };
@@ -59,7 +59,7 @@ public final class IndoorActivity extends Activity {
 
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
-      public void onReceive(Context context, Intent intent) {
+      public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
             + Float.toString(snr));
