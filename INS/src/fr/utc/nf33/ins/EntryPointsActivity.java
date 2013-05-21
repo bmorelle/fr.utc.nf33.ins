@@ -92,6 +92,7 @@ public final class EntryPointsActivity extends ListActivity {
       @Override
       public final void onReceive(Context context, Intent intent) {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        if (buildings == null) return;
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
             R.id.entry_points_list_item_text, buildings));
       }

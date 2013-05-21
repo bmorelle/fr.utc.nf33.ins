@@ -188,6 +188,7 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public final void onReceive(Context context, Intent intent) {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        if (buildings == null) return;
         ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
             .setText(Integer.toString(buildings.size()));
       }
