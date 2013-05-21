@@ -21,7 +21,7 @@
         android:id="@+id/activity_outdoor_button_snr"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@id/activity_outdoor_map"
+        android:layout_alignTop="@id/activity_outdoor_map"
         android:layout_alignParentLeft="true"
         android:text="@string/activity_outdoor_button_entry_points_text" />
 

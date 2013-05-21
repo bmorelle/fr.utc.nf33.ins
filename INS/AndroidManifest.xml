@@ -65,6 +65,11 @@
             android:enabled="true"
             android:exported="false" >
         </service>
+        <service
+            android:name="fr.utc.nf33.ins.location.SnrService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
