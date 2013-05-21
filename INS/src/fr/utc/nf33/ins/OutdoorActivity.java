@@ -187,11 +187,9 @@ public final class OutdoorActivity extends FragmentActivity
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
-        List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
+        List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
-            .setText(Integer.toString(closeBuildings.size()));
-        if (LocationHelper.shouldGoIndoor(closeBuildings))
-          startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+            .setText(Integer.toString(buildings.size()));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
@@ -214,6 +212,10 @@ public final class OutdoorActivity extends FragmentActivity
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_textview_snr))
             .setText("SNR (3 premiers): " + Float.toString(snr));
+
+        List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        if (LocationHelper.shouldGoIndoor(snr, buildings))
+          startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
       }
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
@@ -223,15 +225,6 @@ public final class OutdoorActivity extends FragmentActivity
   protected final void onStop() {
     super.onStop();
 
-    // Disconnect from the Close Buildings Service.
-    unbindService(mCloseBuildingsConnection);
-    mCloseBuildingsConnection = null;
-    mCloseBuildingsService = null;
-
-    // Disconnect from the SNR Service.
-    unbindService(mSnrConnection);
-    mSnrConnection = null;
-
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
     lbm.unregisterReceiver(mNewCloseBuildingsReceiver);
@@ -240,5 +233,14 @@ public final class OutdoorActivity extends FragmentActivity
     mNewLocationReceiver = null;
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
+
+    // Disconnect from the Close Buildings Service.
+    unbindService(mCloseBuildingsConnection);
+    mCloseBuildingsConnection = null;
+    mCloseBuildingsService = null;
+
+    // Disconnect from the SNR Service.
+    unbindService(mSnrConnection);
+    mSnrConnection = null;
   }
 }

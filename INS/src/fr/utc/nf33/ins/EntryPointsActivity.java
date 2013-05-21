@@ -20,6 +20,7 @@ import fr.utc.nf33.ins.location.CloseBuildingsService;
 import fr.utc.nf33.ins.location.CloseBuildingsService.LocalBinder;
 import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
+import fr.utc.nf33.ins.location.SnrService;
 
 /**
  * 
@@ -33,6 +34,10 @@ public final class EntryPointsActivity extends ListActivity {
   private CloseBuildingsService mCloseBuildingsService;
   //
   private BroadcastReceiver mNewCloseBuildingsReceiver;
+  //
+  private BroadcastReceiver mNewSnrReceiver;
+  //
+  private ServiceConnection mSnrConnection;
 
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
@@ -45,8 +50,23 @@ public final class EntryPointsActivity extends ListActivity {
   protected final void onStart() {
     super.onStart();
 
+    // Connect to the SNR Service.
+    Intent intent = new Intent(this, SnrService.class);
+    mSnrConnection = new ServiceConnection() {
+      @Override
+      public final void onServiceConnected(ComponentName name, IBinder service) {
+
+      }
+
+      @Override
+      public final void onServiceDisconnected(ComponentName name) {
+
+      }
+    };
+    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
+
     // Connect to the Close Buildings Service.
-    Intent intent = new Intent(this, CloseBuildingsService.class);
+    intent = new Intent(this, CloseBuildingsService.class);
     mCloseBuildingsConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -74,26 +94,41 @@ public final class EntryPointsActivity extends ListActivity {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
             R.id.entry_points_list_item_text, buildings));
-        if (LocationHelper.shouldGoIndoor(buildings))
-          startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
         LocationIntent.NewCloseBuildings.newIntentFilter());
+
+    mNewSnrReceiver = new BroadcastReceiver() {
+      @Override
+      public final void onReceive(Context context, Intent intent) {
+        float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
+        List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        if (LocationHelper.shouldGoIndoor(snr, buildings))
+          startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
+      }
+    };
+    lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());
   }
 
   @Override
   protected final void onStop() {
     super.onStop();
 
+    // Unregister receivers.
+    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+    lbm.unregisterReceiver(mNewCloseBuildingsReceiver);
+    mNewCloseBuildingsReceiver = null;
+    lbm.unregisterReceiver(mNewSnrReceiver);
+    mNewSnrReceiver = null;
+
     // Disconnect from the Close Buildings Service.
     unbindService(mCloseBuildingsConnection);
     mCloseBuildingsConnection = null;
     mCloseBuildingsService = null;
 
-    // Unregister receivers.
-    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-    lbm.unregisterReceiver(mNewCloseBuildingsReceiver);
-    mNewCloseBuildingsReceiver = null;
+    // Disconnect from the SNR Service.
+    unbindService(mSnrConnection);
+    mSnrConnection = null;
   }
 }

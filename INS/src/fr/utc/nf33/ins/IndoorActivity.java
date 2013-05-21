@@ -75,13 +75,13 @@ public final class IndoorActivity extends Activity {
   protected final void onStop() {
     super.onStop();
 
-    // Disconnect from the SNR Service.
-    unbindService(mSnrConnection);
-    mSnrConnection = null;
-
     // Unregister receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
     lbm.unregisterReceiver(mNewSnrReceiver);
     mNewSnrReceiver = null;
+
+    // Disconnect from the SNR Service.
+    unbindService(mSnrConnection);
+    mSnrConnection = null;
   }
 }
