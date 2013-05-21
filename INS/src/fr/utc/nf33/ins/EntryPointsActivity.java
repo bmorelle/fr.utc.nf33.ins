@@ -55,7 +55,7 @@ public final class EntryPointsActivity extends ListActivity {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
-            R.id.entry_points_list_item_text, buildings.toArray(new Building[0])));
+            R.id.entry_points_list_item_text, buildings));
       }
 
       @Override
@@ -71,10 +71,10 @@ public final class EntryPointsActivity extends ListActivity {
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
-        List<Building> closeBuildings = mCloseBuildingsService.getCloseBuildings();
+        List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
-            R.id.entry_points_list_item_text, closeBuildings.toArray(new Building[0])));
-        if (LocationHelper.shouldGoIndoor(closeBuildings))
+            R.id.entry_points_list_item_text, buildings));
+        if (LocationHelper.shouldGoIndoor(buildings))
           startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
       }
     };
