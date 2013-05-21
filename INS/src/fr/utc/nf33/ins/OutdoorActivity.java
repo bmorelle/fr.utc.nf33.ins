@@ -212,7 +212,7 @@ public final class OutdoorActivity extends FragmentActivity
       public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_snr))
-            .setText(Float.toString(snr));
+            .setText(String.format("%.02f", snr));
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (LocationHelper.shouldGoIndoor(snr, buildings))
