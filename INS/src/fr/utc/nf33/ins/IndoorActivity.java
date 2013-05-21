@@ -40,7 +40,7 @@ public final class IndoorActivity extends Activity {
     super.onStart();
 
     // Connect to the SNR Service.
-    Intent intent = new Intent(this, SnrService.class);
+    Intent snrIntent = new Intent(this, SnrService.class);
     mSnrConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -52,7 +52,7 @@ public final class IndoorActivity extends Activity {
 
       }
     };
-    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

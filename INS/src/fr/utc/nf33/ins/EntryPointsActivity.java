@@ -51,7 +51,7 @@ public final class EntryPointsActivity extends ListActivity {
     super.onStart();
 
     // Connect to the SNR Service.
-    Intent intent = new Intent(this, SnrService.class);
+    Intent snrIntent = new Intent(this, SnrService.class);
     mSnrConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -63,10 +63,10 @@ public final class EntryPointsActivity extends ListActivity {
 
       }
     };
-    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
 
     // Connect to the Close Buildings Service.
-    intent = new Intent(this, CloseBuildingsService.class);
+    Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
     mCloseBuildingsConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -83,7 +83,7 @@ public final class EntryPointsActivity extends ListActivity {
 
       }
     };
-    bindService(intent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
+    bindService(closeBuildingsIntent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

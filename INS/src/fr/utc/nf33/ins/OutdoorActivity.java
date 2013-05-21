@@ -100,12 +100,12 @@ public final class OutdoorActivity extends FragmentActivity
     fragmentTransaction.commit();
 
     // Start the SNR Service.
-    Intent intent = new Intent(this, SnrService.class);
-    startService(intent);
+    Intent snrIntent = new Intent(this, SnrService.class);
+    startService(snrIntent);
 
     // Start the Close Buildings Service.
-    intent = new Intent(this, CloseBuildingsService.class);
-    startService(intent);
+    Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
+    startService(closeBuildingsIntent);
   }
 
   @Override
@@ -120,12 +120,12 @@ public final class OutdoorActivity extends FragmentActivity
     super.onDestroy();
 
     // Stop the Close Buildings Service.
-    Intent intent = new Intent(this, CloseBuildingsService.class);
-    stopService(intent);
+    Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
+    stopService(closeBuildingsIntent);
 
     // Stop the SNR Service.
-    intent = new Intent(this, SnrService.class);
-    stopService(intent);
+    Intent snrIntent = new Intent(this, SnrService.class);
+    stopService(snrIntent);
   }
 
   @Override
@@ -150,7 +150,7 @@ public final class OutdoorActivity extends FragmentActivity
     map.setMyLocationEnabled(true);
 
     // Connect to the SNR Service.
-    Intent intent = new Intent(this, SnrService.class);
+    Intent snrIntent = new Intent(this, SnrService.class);
     mSnrConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -162,10 +162,10 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
 
     // Connect to the Close Buildings Service.
-    intent = new Intent(this, CloseBuildingsService.class);
+    Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
     mCloseBuildingsConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
@@ -179,7 +179,7 @@ public final class OutdoorActivity extends FragmentActivity
 
       }
     };
-    bindService(intent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
+    bindService(closeBuildingsIntent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -211,8 +211,8 @@ public final class OutdoorActivity extends FragmentActivity
       @Override
       public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
-        ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_textview_snr))
-            .setText("SNR (3 premiers): " + Float.toString(snr));
+        ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_snr))
+            .setText(Float.toString(snr));
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (LocationHelper.shouldGoIndoor(snr, buildings))
