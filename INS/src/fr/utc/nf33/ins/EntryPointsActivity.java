@@ -75,7 +75,7 @@ public final class EntryPointsActivity extends ListActivity {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
-            R.id.entry_points_list_item_text, buildings));
+            R.layout.entry_points_list_item, buildings));
       }
 
       @Override
@@ -94,7 +94,7 @@ public final class EntryPointsActivity extends ListActivity {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         setListAdapter(new ArrayAdapter<Building>(EntryPointsActivity.this,
-            R.id.entry_points_list_item_text, buildings));
+            R.layout.entry_points_list_item, buildings));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
