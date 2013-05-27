@@ -68,7 +68,7 @@ public final class GpsDialogFragment extends DialogFragment {
     builder
         .setTitle(R.string.gps_dialog_title)
         .setMessage(R.string.gps_dialog_message)
-        .setPositiveButton(R.string.gps_dialog_button_positive,
+        .setPositiveButton(R.string.gps_dialog_button_positive_text,
             new DialogInterface.OnClickListener() {
               @Override
               public final void onClick(DialogInterface dialog, int id) {

@@ -72,14 +72,13 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       if (convertView == null)
         convertView = mInflater.inflate(R.layout.entry_points_list_child, null);
       EntryPoint ep = getChild(groupPosition, childPosition);
-      ((TextView) convertView.findViewById(R.id.entry_points_list_child_name_text)).setText(ep
-          .getName());
-      ((TextView) convertView.findViewById(R.id.entry_points_list_child_level_text)).setText(Byte
+      ((TextView) convertView.findViewById(R.id.entry_points_textview_name)).setText(ep.getName());
+      ((TextView) convertView.findViewById(R.id.entry_points_textview_level)).setText(Byte
           .toString(ep.getFloor()));
-      ((TextView) convertView.findViewById(R.id.entry_points_list_child_lat_text)).setText(String
-          .format("%.02f", ep.getLatitude()));
-      ((TextView) convertView.findViewById(R.id.entry_points_list_child_lon_text)).setText(String
-          .format("%.02f", ep.getLongitude()));
+      ((TextView) convertView.findViewById(R.id.entry_points_textview_lat)).setText(String.format(
+          "%.02f", ep.getLatitude()));
+      ((TextView) convertView.findViewById(R.id.entry_points_textview_lon)).setText(String.format(
+          "%.02f", ep.getLongitude()));
       return convertView;
     }
 

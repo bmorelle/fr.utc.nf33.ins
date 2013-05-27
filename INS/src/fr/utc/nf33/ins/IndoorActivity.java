@@ -61,8 +61,8 @@ public final class IndoorActivity extends Activity {
       @Override
       public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
-        ((TextView) IndoorActivity.this.findViewById(R.id.indoorSNR)).setText("SNR (3 premiers): "
-            + Float.toString(snr));
+        ((TextView) IndoorActivity.this.findViewById(R.id.activity_indoor_textview_snr))
+            .setText(String.format("%.02f", snr));
 
         if (LocationHelper.shouldGoOutdoor(snr))
           startActivity(new Intent(IndoorActivity.this, OutdoorActivity.class));

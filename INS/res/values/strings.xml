@@ -5,14 +5,13 @@
     <string name="action_settings">Settings</string>
     <string name="gps_dialog_message">You must enable the <i>Use GPS satellites</i> setting in order to use this app.</string>
     <string name="gps_dialog_title"><i>Location and security</i></string>
-    <string name="gps_dialog_button_positive">OK</string>
+    <string name="gps_dialog_button_positive_text">OK</string>
     <string name="activity_outdoor_title">INS: Outdoor</string>
-    <string name="activity_indoor_text">Mode Indoor !</string>
     <string name="activity_indoor_title">INS: Indoor</string>
     <string name="activity_outdoor_button_entry_points_text">0</string>
     <string name="activity_entry_points_title">INS: Entry Points</string>
-    <string name="activity_entry_points_list_child_level_text">Level</string>
-    <string name="activity_entry_points_list_child_lat_text">Latitude</string>
-    <string name="activity_entry_points_list_child_lon_text">Longitude</string>
+    <string name="entry_points_textview_level_text">Level</string>
+    <string name="entry_points_textview_lat_text">Latitude</string>
+    <string name="entry_points_textview_lon_text">Longitude</string>
 
 </resources>
