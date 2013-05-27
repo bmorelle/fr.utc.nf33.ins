@@ -3,7 +3,6 @@
  */
 package fr.utc.nf33.ins;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ExpandableListActivity;
@@ -175,12 +174,6 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         mCloseBuildingsService = ((LocalBinder) service).getService();
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
-        EntryPoint entryPoint = new EntryPoint("Porte d'entrée", (byte) 1, 11.0, 11.0);
-        List<EntryPoint> entryPoints = new ArrayList<EntryPoint>();
-        entryPoints.add(entryPoint);
-        Building building = new Building("Maison de Clément", entryPoints);
-        buildings = new ArrayList<Building>();
-        buildings.add(building);
         if (buildings == null) return;
         setListAdapter(new ExpandableListViewAdapter(buildings));
       }
