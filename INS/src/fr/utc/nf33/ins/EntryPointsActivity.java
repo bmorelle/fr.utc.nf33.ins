@@ -51,7 +51,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     }
 
     @Override
-    public final Object getChild(int groupPosition, int childPosition) {
+    public final EntryPoint getChild(int groupPosition, int childPosition) {
       return mBuildings.get(groupPosition).getEntryPoints().get(childPosition);
     }
 
@@ -70,7 +70,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         View convertView, ViewGroup parent) {
       if (convertView == null)
         convertView = mInflater.inflate(R.layout.entry_points_list_child, null);
-      EntryPoint ep = (EntryPoint) getChild(groupPosition, childPosition);
+      EntryPoint ep = getChild(groupPosition, childPosition);
       ((TextView) convertView.findViewById(R.id.entry_points_list_child_name_text)).setText(ep
           .getName());
       ((TextView) convertView.findViewById(R.id.entry_points_list_level_text)).setText(Byte
@@ -83,7 +83,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     }
 
     @Override
-    public final Object getGroup(int groupPosition) {
+    public final Building getGroup(int groupPosition) {
       return mBuildings.get(groupPosition);
     }
 
@@ -102,7 +102,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         ViewGroup parent) {
       if (convertView == null)
         convertView = mInflater.inflate(R.layout.entry_points_list_group, null);
-      Building building = (Building) getGroup(groupPosition);
+      Building building = getGroup(groupPosition);
       ((TextView) convertView.findViewById(R.id.entry_points_list_group_text)).setText(building.getName());
       return convertView;
     }
