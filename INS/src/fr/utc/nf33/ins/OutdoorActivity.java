@@ -73,11 +73,6 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private ServiceConnection mSnrConnection;
 
-  @Override
-  public final void onBackPressed() {
-
-  }
-
   /**
    * Called when the user clicks the Entry Points button.
    * 
