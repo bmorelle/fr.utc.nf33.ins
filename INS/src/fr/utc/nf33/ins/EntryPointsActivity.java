@@ -133,7 +133,9 @@ public final class EntryPointsActivity extends ExpandableListActivity {
   @Override
   public final boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
       int childPosition, long id) {
-    return super.onChildClick(parent, v, groupPosition, childPosition, id);
+    startActivity(new Intent(this, IndoorActivity.class));
+
+    return true;
   }
 
   @Override
@@ -203,8 +205,17 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       public final void onReceive(Context context, Intent intent) {
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
-        if (LocationHelper.shouldGoIndoor(snr, buildings))
-          startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
+        switch (LocationHelper.shouldGoIndoor(snr, buildings)) {
+          case ASK_USER:
+            break;
+          case NO:
+            break;
+          case YES:
+            startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
+            break;
+          default:
+            break;
+        }
       }
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());

@@ -210,8 +210,18 @@ public final class OutdoorActivity extends FragmentActivity
             .setText(String.format("%.02f", snr));
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
-        if (LocationHelper.shouldGoIndoor(snr, buildings))
-          startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+        switch (LocationHelper.shouldGoIndoor(snr, buildings)) {
+          case ASK_USER:
+            startActivity(new Intent(OutdoorActivity.this, EntryPointsActivity.class));
+            break;
+          case NO:
+            break;
+          case YES:
+            startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+            break;
+          default:
+            break;
+        }
       }
     };
     lbm.registerReceiver(mNewSnrReceiver, LocationIntent.NewSnr.newIntentFilter());

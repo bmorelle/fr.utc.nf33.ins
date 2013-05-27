@@ -16,6 +16,26 @@ import android.database.Cursor;
  * 
  */
 public final class LocationHelper {
+  /**
+   * 
+   * @author
+   * 
+   */
+  public enum ShouldGoIndoorResult {
+    /**
+     * 
+     */
+    ASK_USER,
+    /**
+     * 
+     */
+    NO,
+    /**
+     * 
+     */
+    YES;
+  }
+
   //
   private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
   //
@@ -24,6 +44,7 @@ public final class LocationHelper {
   public static final byte SNR_THRESHOLD = 35;
   //
   private static final double SQUARED_MAX_DISTANCE = 100.0;
+
   //
   private static final double SQUARED_RADIUS_OF_THE_EARTH = RADIUS_OF_THE_EARTH
       * RADIUS_OF_THE_EARTH;
@@ -107,11 +128,13 @@ public final class LocationHelper {
    * @param closeBuildings
    * @return
    */
-  public static final boolean shouldGoIndoor(float snr, List<Building> closeBuildings) {
-    if ((snr >= SNR_THRESHOLD) || (closeBuildings == null) || (closeBuildings.size() != 1))
-      return false;
-
-    return closeBuildings.get(0).getEntryPoints().size() == 1;
+  public static final ShouldGoIndoorResult shouldGoIndoor(float snr, List<Building> closeBuildings) {
+    if ((snr >= SNR_THRESHOLD) || (closeBuildings == null))
+      return ShouldGoIndoorResult.NO;
+    else if ((closeBuildings.size() != 1) || (closeBuildings.get(0).getEntryPoints().size() != 1))
+      return ShouldGoIndoorResult.ASK_USER;
+    else
+      return ShouldGoIndoorResult.YES;
   }
 
   /**
