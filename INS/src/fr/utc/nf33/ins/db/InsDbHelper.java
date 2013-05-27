@@ -36,7 +36,7 @@ public final class InsDbHelper extends SQLiteAssetHelper {
   public final Cursor getEntryPoints() {
     return getReadableDatabase()
         .rawQuery(
-            "SELECT b.idBuilding AS _id, b.name AS bName, ep.Name AS epName, ep.floor AS epFloor, ep.latitude AS epLatitude, ep.longitude AS epLongitude FROM Building b, EntryPoint ep WHERE b.idBuilding = ep.Building_idBuilding",
+            "SELECT b.idBuilding AS _id, b.name AS bName, ep.Name AS epName, ep.floor AS epFloor, ep.latitude AS epLatitude, ep.longitude AS epLongitude FROM Building b, EntryPoint ep WHERE b.idBuilding = ep.Building_idBuilding ORDER BY _id",
             null);
   }
 }
