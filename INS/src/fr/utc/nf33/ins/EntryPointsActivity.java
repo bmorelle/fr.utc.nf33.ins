@@ -3,6 +3,7 @@
  */
 package fr.utc.nf33.ins;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.app.ExpandableListActivity;
@@ -18,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListView;
 import android.widget.TextView;
 import fr.utc.nf33.ins.location.Building;
 import fr.utc.nf33.ins.location.CloseBuildingsService;
@@ -35,8 +37,8 @@ import fr.utc.nf33.ins.location.SnrService;
 public final class EntryPointsActivity extends ExpandableListActivity {
   /**
    * 
-   * @author 
-   *
+   * @author
+   * 
    */
   private final class ExpandableListViewAdapter extends BaseExpandableListAdapter {
     //
@@ -73,7 +75,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       EntryPoint ep = getChild(groupPosition, childPosition);
       ((TextView) convertView.findViewById(R.id.entry_points_list_child_name_text)).setText(ep
           .getName());
-      ((TextView) convertView.findViewById(R.id.entry_points_list_level_text)).setText(Byte
+      ((TextView) convertView.findViewById(R.id.entry_points_list_child_level_text)).setText(Byte
           .toString(ep.getFloor()));
       ((TextView) convertView.findViewById(R.id.entry_points_list_child_lat_text)).setText(String
           .format("%.02f", ep.getLatitude()));
@@ -103,7 +105,8 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       if (convertView == null)
         convertView = mInflater.inflate(R.layout.entry_points_list_group, null);
       Building building = getGroup(groupPosition);
-      ((TextView) convertView.findViewById(R.id.entry_points_list_group_text)).setText(building.getName());
+      ((TextView) convertView.findViewById(R.id.entry_points_list_group_text)).setText(building
+          .getName());
       return convertView;
     }
 
@@ -117,7 +120,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       return true;
     }
   }
-  
+
   //
   private ServiceConnection mCloseBuildingsConnection;
   //
@@ -130,10 +133,19 @@ public final class EntryPointsActivity extends ExpandableListActivity {
   private ServiceConnection mSnrConnection;
 
   @Override
+  public final boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
+      int childPosition, long id) {
+    return super.onChildClick(parent, v, groupPosition, childPosition, id);
+  }
+
+  @Override
   protected final void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_entry_points);
+
+    // Remove the Group Indicator.
+    getExpandableListView().setGroupIndicator(null);
   }
 
   @Override
@@ -163,8 +175,14 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         mCloseBuildingsService = ((LocalBinder) service).getService();
 
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+        EntryPoint entryPoint = new EntryPoint("Porte d'entrée", (byte) 1, 11.0, 11.0);
+        List<EntryPoint> entryPoints = new ArrayList<EntryPoint>();
+        entryPoints.add(entryPoint);
+        Building building = new Building("Maison de Clément", entryPoints);
+        buildings = new ArrayList<Building>();
+        buildings.add(building);
         if (buildings == null) return;
-         setListAdapter(new ExpandableListViewAdapter(buildings));
+        setListAdapter(new ExpandableListViewAdapter(buildings));
       }
 
       @Override
@@ -182,7 +200,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
       public final void onReceive(Context context, Intent intent) {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
-         setListAdapter(new ExpandableListViewAdapter(buildings));
+        setListAdapter(new ExpandableListViewAdapter(buildings));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,

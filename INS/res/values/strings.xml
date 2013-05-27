@@ -11,8 +11,8 @@
     <string name="activity_indoor_title">INS: Indoor</string>
     <string name="activity_outdoor_button_entry_points_text">0</string>
     <string name="activity_entry_points_title">INS: Entry Points</string>
-    <string name="activity_entry_points_list_group_level_text">Level</string>
-    <string name="activity_entry_points_list_group_lat_text">Latitude</string>
-    <string name="activity_entry_points_list_group_lon_text">Longitude</string>
+    <string name="activity_entry_points_list_child_level_text">Level</string>
+    <string name="activity_entry_points_list_child_lat_text">Latitude</string>
+    <string name="activity_entry_points_list_child_lon_text">Longitude</string>
 
 </resources>
