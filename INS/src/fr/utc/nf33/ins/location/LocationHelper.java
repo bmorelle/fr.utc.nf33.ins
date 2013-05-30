@@ -21,6 +21,80 @@ public final class LocationHelper {
    * @author
    * 
    */
+  public enum DistancesApproximator {
+    /**
+     * 
+     */
+    PLANAR {
+      @Override
+      public double latitudeDifference(double distance, double latitude, double longitude) {
+        return (distance / (RADIUS_OF_THE_EARTH * 1000)) / DEGREES_TO_RADIANS;
+      }
+
+      @Override
+      public double longitudeDifference(double distance, double latitude, double longitude) {
+        double cosLat = Math.cos(latitude * DEGREES_TO_RADIANS);
+        if (cosLat == 0) throw new IllegalArgumentException();
+        if (cosLat < 0) cosLat *= -1.0;
+
+        return (distance / (RADIUS_OF_THE_EARTH * 1000 * cosLat)) / DEGREES_TO_RADIANS;
+      }
+
+      @Override
+      public double squaredDistanceBetween(double startLatitude, double startLongitude,
+          double endLatitude, double endLongitude) {
+        double sLat = startLatitude * DEGREES_TO_RADIANS;
+        double sLon = startLongitude * DEGREES_TO_RADIANS;
+        double eLat = endLatitude * DEGREES_TO_RADIANS;
+        double eLon = endLongitude * DEGREES_TO_RADIANS;
+
+        double diffLat = eLat - sLat;
+        double diffLon = eLon - sLon;
+        double meanLat = (sLat + eLat) / 2.0;
+
+        double a = Math.cos(meanLat) * diffLon;
+
+        return SQUARED_RADIUS_OF_THE_EARTH * ((diffLat * diffLat) + (a * a)) * 1000;
+      }
+    };
+
+    /**
+     * 
+     * @param distance
+     * @param latitude
+     * @param longitude
+     * @return
+     */
+    public abstract double latitudeDifference(double distance, double latitude, double longitude);
+
+    /**
+     * 
+     * @param distance
+     * @param latitude
+     * @param longitude
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public abstract double longitudeDifference(double distance, double latitude, double longitude);
+
+    /**
+     * Computes the approximate squared distance in meters between two locations.
+     * 
+     * @param startLatitude the starting latitude
+     * @param startLongitude the starting longitude
+     * @param endLatitude the ending latitude
+     * @param endLongitude the ending longitude
+     * @return the computed squared distance
+     */
+    public abstract double squaredDistanceBetween(double startLatitude, double startLongitude,
+        double endLatitude, double endLongitude);
+  }
+
+  /**
+   * 
+   * @author
+   * 
+   */
   public enum ShouldGoIndoorResult {
     /**
      * 
@@ -36,15 +110,25 @@ public final class LocationHelper {
     YES;
   }
 
+  /**
+   * 
+   */
+  public static final DistancesApproximator DEFAULT_DISTANCES_APPROXIMATOR =
+      DistancesApproximator.PLANAR;
   //
   private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
+  /**
+   * 
+   */
+  public static final double MAX_DISTANCE = 10.0;
   //
   private static final double RADIUS_OF_THE_EARTH = 6371.009;
-  //
+  /**
+   * 
+   */
   public static final byte SNR_THRESHOLD = 35;
   //
-  private static final double SQUARED_MAX_DISTANCE = 100.0;
-
+  private static final double SQUARED_MAX_DISTANCE = MAX_DISTANCE * MAX_DISTANCE;
   //
   private static final double SQUARED_RADIUS_OF_THE_EARTH = RADIUS_OF_THE_EARTH
       * RADIUS_OF_THE_EARTH;
@@ -66,7 +150,9 @@ public final class LocationHelper {
     while (cursor.moveToNext()) {
       double epLatitude = cursor.getDouble(epLatitudeIdx);
       double epLongitude = cursor.getDouble(epLongitudeIdx);
-      double sqDist = squaredDistanceBetween(latitude, longitude, epLatitude, epLongitude);
+      double sqDist =
+          DEFAULT_DISTANCES_APPROXIMATOR.squaredDistanceBetween(latitude, longitude, epLatitude,
+              epLongitude);
       if (sqDist <= SQUARED_MAX_DISTANCE) {
         int id = cursor.getInt(_idIdx);
         if (currentId != id) {
@@ -89,9 +175,11 @@ public final class LocationHelper {
         @Override
         public final int compare(EntryPoint lhs, EntryPoint rhs) {
           double lhsSqDist =
-              squaredDistanceBetween(latitude, longitude, lhs.getLatitude(), lhs.getLongitude());
+              DEFAULT_DISTANCES_APPROXIMATOR.squaredDistanceBetween(latitude, longitude,
+                  lhs.getLatitude(), lhs.getLongitude());
           double rhsSqDist =
-              squaredDistanceBetween(latitude, longitude, rhs.getLatitude(), rhs.getLongitude());
+              DEFAULT_DISTANCES_APPROXIMATOR.squaredDistanceBetween(latitude, longitude,
+                  rhs.getLatitude(), rhs.getLongitude());
           if (lhsSqDist < rhsSqDist)
             return -1;
           else if (lhsSqDist == rhsSqDist)
@@ -105,11 +193,11 @@ public final class LocationHelper {
       @Override
       public final int compare(Building lhs, Building rhs) {
         double lhsSqDist =
-            squaredDistanceBetween(latitude, longitude, lhs.getEntryPoints().get(0).getLatitude(),
-                lhs.getEntryPoints().get(0).getLongitude());
+            DEFAULT_DISTANCES_APPROXIMATOR.squaredDistanceBetween(latitude, longitude, lhs
+                .getEntryPoints().get(0).getLatitude(), lhs.getEntryPoints().get(0).getLongitude());
         double rhsSqDist =
-            squaredDistanceBetween(latitude, longitude, rhs.getEntryPoints().get(0).getLatitude(),
-                rhs.getEntryPoints().get(0).getLongitude());
+            DEFAULT_DISTANCES_APPROXIMATOR.squaredDistanceBetween(latitude, longitude, rhs
+                .getEntryPoints().get(0).getLatitude(), rhs.getEntryPoints().get(0).getLongitude());
         if (lhsSqDist < rhsSqDist)
           return -1;
         else if (lhsSqDist == rhsSqDist)
@@ -144,31 +232,6 @@ public final class LocationHelper {
    */
   public static final boolean shouldGoOutdoor(float snr) {
     return snr >= SNR_THRESHOLD;
-  }
-
-  /**
-   * Computes the approximate squared distance in meters between two locations.
-   * 
-   * @param startLatitude the starting latitude
-   * @param startLongitude the starting longitude
-   * @param endLatitude the ending latitude
-   * @param endLongitude the ending longitude
-   * @return the computed squared distance
-   */
-  private static final double squaredDistanceBetween(double startLatitude, double startLongitude,
-      double endLatitude, double endLongitude) {
-    double sLat = startLatitude * DEGREES_TO_RADIANS;
-    double sLon = startLongitude * DEGREES_TO_RADIANS;
-    double eLat = endLatitude * DEGREES_TO_RADIANS;
-    double eLon = endLongitude * DEGREES_TO_RADIANS;
-
-    double diffLat = eLat - sLat;
-    double diffLon = eLon - sLon;
-    double meanLat = (sLat + eLat) / 2.0;
-
-    double a = Math.cos(meanLat) * diffLon;
-
-    return SQUARED_RADIUS_OF_THE_EARTH * ((diffLat * diffLat) + (a * a)) * 1000;
   }
 
   // Suppress default constructor for noninstantiability.

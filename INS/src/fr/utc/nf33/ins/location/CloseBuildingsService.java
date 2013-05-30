@@ -87,7 +87,7 @@ public final class CloseBuildingsService extends Service {
         if (mAverageSnr >= LocationHelper.SNR_THRESHOLD) {
           InsDbHelper dbHelper = new InsDbHelper(CloseBuildingsService.this);
 
-          Cursor cursor = dbHelper.getEntryPoints();
+          Cursor cursor = dbHelper.getEntryPoints(mBestLocation.latitude, mBestLocation.longitude);
           if (isCancelled()) {
             cursor.close();
             dbHelper.close();
