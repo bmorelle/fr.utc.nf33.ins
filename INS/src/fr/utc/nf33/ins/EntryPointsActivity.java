@@ -133,8 +133,15 @@ public final class EntryPointsActivity extends ExpandableListActivity {
   @Override
   public final boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
       int childPosition, long id) {
-    startActivity(new Intent(this, IndoorActivity.class));
-
+    List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
+    Intent indoorIntent = new Intent(this, IndoorActivity.class);
+    StringBuilder sb = new StringBuilder();
+    Building building = buildings.get(groupPosition);
+    sb.append(building.getName());
+    sb.append("\n");
+    sb.append(building.getEntryPoints().get(childPosition).getName());
+    indoorIntent.putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
+    startActivity(indoorIntent);
     return true;
   }
 
@@ -211,7 +218,14 @@ public final class EntryPointsActivity extends ExpandableListActivity {
           case NO:
             break;
           case YES:
-            startActivity(new Intent(EntryPointsActivity.this, IndoorActivity.class));
+            Intent indoorIntent = new Intent(EntryPointsActivity.this, IndoorActivity.class);
+            StringBuilder sb = new StringBuilder();
+            Building building = buildings.get(0);
+            sb.append(building.getName());
+            sb.append("\n");
+            sb.append(building.getEntryPoints().get(0).getName());
+            indoorIntent.putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
+            startActivity(indoorIntent);
             break;
           default:
             break;

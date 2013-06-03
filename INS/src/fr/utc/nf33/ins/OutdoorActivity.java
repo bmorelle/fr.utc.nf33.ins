@@ -217,7 +217,15 @@ public final class OutdoorActivity extends FragmentActivity
           case NO:
             break;
           case YES:
-            startActivity(new Intent(OutdoorActivity.this, IndoorActivity.class));
+            Intent indoorIntent = new Intent(OutdoorActivity.this, IndoorActivity.class);
+            StringBuilder sb = new StringBuilder();
+            Building building = buildings.get(0);
+            sb.append(building.getName());
+            sb.append("\n");
+            sb.append(building.getEntryPoints().get(0).getName());
+            indoorIntent
+                .putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
+            startActivity(indoorIntent);
             break;
           default:
             break;

@@ -217,9 +217,9 @@ public final class LocationHelper {
    * @return
    */
   public static final ShouldGoIndoorResult shouldGoIndoor(float snr, List<Building> closeBuildings) {
-    if ((snr >= SNR_THRESHOLD) || (closeBuildings == null))
+    if ((closeBuildings == null) || (closeBuildings.size() == 0) || (snr >= SNR_THRESHOLD))
       return ShouldGoIndoorResult.NO;
-    else if ((closeBuildings.size() != 1) || (closeBuildings.get(0).getEntryPoints().size() != 1))
+    else if ((closeBuildings.size() > 1) || (closeBuildings.get(0).getEntryPoints().size() > 1))
       return ShouldGoIndoorResult.ASK_USER;
     else
       return ShouldGoIndoorResult.YES;

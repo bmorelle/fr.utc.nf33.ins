@@ -81,6 +81,14 @@ public final class SnrService extends Service {
   //
   private GpsStatusListener mGpsStatusListener;
 
+  /**
+   * 
+   * @return
+   */
+  public final float getAverageSnr() {
+    return mGpsStatusListener.mAverageSnr;
+  }
+
   @Override
   public final IBinder onBind(Intent intent) {
     onRebind(intent);

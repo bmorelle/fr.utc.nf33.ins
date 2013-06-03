@@ -22,6 +22,8 @@ public final class LocationIntent {
      * 
      */
     public static final String ACTION_NAME = "fr.utc.nf33.ins.NEW_CLOSE_BUILDINGS";
+    
+    public static final String EXTRA_ENTRY_POINT = "fr.utc.nf33.ins.ENTRY_POINT";
 
     /**
      * 

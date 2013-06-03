@@ -4,6 +4,15 @@
     android:layout_height="fill_parent" >
 
     <TextView
+        android:id="@+id/activity_indoor_textview_access_point"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textIsSelectable="false"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true" />
+    
+    <TextView
         android:id="@+id/activity_indoor_textview_snr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -16,6 +16,7 @@ import android.widget.TextView;
 import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
 import fr.utc.nf33.ins.location.SnrService;
+import fr.utc.nf33.ins.location.SnrService.LocalBinder;
 
 /**
  * 
@@ -27,12 +28,17 @@ public final class IndoorActivity extends Activity {
   private ServiceConnection mSnrConnection;
   //
   private BroadcastReceiver mNewSnrReceiver;
+  //
+  private SnrService mSnrService;
 
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_indoor);
+
+    ((TextView) findViewById(R.id.activity_indoor_textview_access_point)).setText(getIntent()
+        .getStringExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT));
   }
 
   @Override
@@ -44,7 +50,9 @@ public final class IndoorActivity extends Activity {
     mSnrConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
-
+        mSnrService = ((LocalBinder) service).getService();
+        ((TextView) findViewById(R.id.activity_indoor_textview_snr)).setText(Float
+            .toString(mSnrService.getAverageSnr()));
       }
 
       @Override
@@ -83,5 +91,6 @@ public final class IndoorActivity extends Activity {
     // Disconnect from the SNR Service.
     unbindService(mSnrConnection);
     mSnrConnection = null;
+    mSnrService = null;
   }
 }
