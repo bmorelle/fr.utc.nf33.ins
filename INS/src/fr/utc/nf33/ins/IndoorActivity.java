@@ -51,8 +51,8 @@ public final class IndoorActivity extends Activity {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
         mSnrService = ((LocalBinder) service).getService();
-        ((TextView) findViewById(R.id.activity_indoor_textview_snr)).setText(Float
-            .toString(mSnrService.getAverageSnr()));
+        ((TextView) findViewById(R.id.activity_indoor_textview_snr)).setText(String.format("%.02f",
+            mSnrService.getAverageSnr()));
       }
 
       @Override

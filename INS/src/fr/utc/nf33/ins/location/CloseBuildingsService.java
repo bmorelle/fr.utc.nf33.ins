@@ -189,7 +189,7 @@ public final class CloseBuildingsService extends Service {
     }
 
     //
-    private static final float GPS_MIN_DISTANCE = 10F;
+    private static final float GPS_MIN_DISTANCE = 0F;
     //
     private static final short GPS_MIN_TIME = 3000;
     //

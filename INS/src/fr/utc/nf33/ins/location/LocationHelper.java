@@ -34,8 +34,8 @@ public final class LocationHelper {
       @Override
       public double longitudeDifference(double distance, double latitude, double longitude) {
         double cosLat = Math.cos(latitude * DEGREES_TO_RADIANS);
-        if (cosLat == 0) throw new IllegalArgumentException();
-        if (cosLat < 0) cosLat *= -1.0;
+        if (cosLat == 0.0) return 0.0;
+        if (cosLat < 0.0) cosLat *= -1.0;
 
         return (distance / (RADIUS_OF_THE_EARTH * 1000 * cosLat)) / DEGREES_TO_RADIANS;
       }
@@ -126,7 +126,7 @@ public final class LocationHelper {
   /**
    * 
    */
-  public static final byte SNR_THRESHOLD = 35;
+  public static final byte SNR_THRESHOLD = 33;
   //
   private static final double SQUARED_MAX_DISTANCE = MAX_DISTANCE * MAX_DISTANCE;
   //
