@@ -216,7 +216,10 @@ public final class OutdoorActivity extends FragmentActivity
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         switch (LocationHelper.shouldGoIndoor(snr, buildings)) {
           case ASK_USER:
-            startActivity(new Intent(OutdoorActivity.this, EntryPointsActivity.class));
+            Intent epIntent = new Intent(OutdoorActivity.this, EntryPointsActivity.class);
+            epIntent.putExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT,
+                EntryPointsActivity.CHOOSE_MSG);
+            startActivity(epIntent);
             break;
           case NO:
             break;

@@ -34,6 +34,10 @@ import fr.utc.nf33.ins.location.SnrService;
  * 
  */
 public final class EntryPointsActivity extends ExpandableListActivity {
+
+  public static final String EXTRA_CHOOSE_ENTRY_POINT = "fr.utc.nf33.ins.CHOOSE_ENTRY_POINT";
+  public static final String CHOOSE_MSG = "Please click on the access point you just entered";
+
   /**
    * 
    * @author
@@ -151,6 +155,13 @@ public final class EntryPointsActivity extends ExpandableListActivity {
 
     setContentView(R.layout.activity_entry_points);
 
+    String msg = getIntent().getStringExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT);
+
+    if (msg != null) {
+      ((TextView) findViewById(R.id.activity_entry_points_textview_choose)).setText(msg + "\n"
+          + "\n");
+    }
+
     // Remove the Group Indicator.
     getExpandableListView().setGroupIndicator(null);
   }
@@ -224,7 +235,8 @@ public final class EntryPointsActivity extends ExpandableListActivity {
             sb.append(building.getName());
             sb.append("\n");
             sb.append(building.getEntryPoints().get(0).getName());
-            indoorIntent.putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
+            indoorIntent
+                .putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
             startActivity(indoorIntent);
             break;
           default:
