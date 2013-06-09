@@ -184,8 +184,12 @@ public final class OutdoorActivity extends FragmentActivity
       public final void onReceive(Context context, Intent intent) {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
+        int numberOfEntryPoints = 0;
+        for (int i = 0; i < buildings.size(); ++i) {
+          numberOfEntryPoints += buildings.get(i).getEntryPoints().size();
+        }
         ((Button) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_entry_points))
-            .setText(Integer.toString(buildings.size()));
+            .setText(Integer.toString(numberOfEntryPoints));
       }
     };
     lbm.registerReceiver(mNewCloseBuildingsReceiver,
