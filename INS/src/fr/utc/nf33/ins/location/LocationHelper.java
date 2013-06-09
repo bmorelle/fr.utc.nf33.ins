@@ -120,7 +120,7 @@ public final class LocationHelper {
   /**
    * 
    */
-  public static final double MAX_DISTANCE = 15.0;
+  public static final double MAX_DISTANCE = 12.0;
   //
   private static final double RADIUS_OF_THE_EARTH = 6371.009;
   /**
