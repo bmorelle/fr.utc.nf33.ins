@@ -3,11 +3,13 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
 
+    <!-- SPECIFICATION : MAP_010 -->
     <FrameLayout
         android:id="@+id/activity_outdoor_map"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
 
+    <!-- SPECIFICATION : POS_070 -->
     <Button
         android:id="@+id/activity_outdoor_button_entry_points"
         android:layout_width="50dp"

@@ -29,6 +29,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+        <!--  SPECIFICATION : MOD_030  -->
         <activity
             android:name="fr.utc.nf33.ins.OutdoorActivity"
             android:label="@string/activity_outdoor_title"

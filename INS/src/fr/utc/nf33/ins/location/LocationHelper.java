@@ -117,15 +117,11 @@ public final class LocationHelper {
       DistancesApproximator.PLANAR;
   //
   private static final double DEGREES_TO_RADIANS = Math.PI / 180.0;
-  /**
-   * 
-   */
+  // SPECIFICATION : POS_081
   public static final double MAX_DISTANCE = 12.0;
   //
   private static final double RADIUS_OF_THE_EARTH = 6371.009;
-  /**
-   * 
-   */
+  // SPECIFICATION : TRS_020
   public static final byte SNR_THRESHOLD = 33;
   //
   private static final double SQUARED_MAX_DISTANCE = MAX_DISTANCE * MAX_DISTANCE;
@@ -210,6 +206,7 @@ public final class LocationHelper {
     return closeBuildings;
   }
 
+  // SPECIFICATION : TRS_011, TRS_030
   /**
    * 
    * @param snr

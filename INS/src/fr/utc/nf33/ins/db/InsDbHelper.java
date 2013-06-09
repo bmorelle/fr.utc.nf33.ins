@@ -10,6 +10,7 @@ import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 
 import fr.utc.nf33.ins.location.LocationHelper;
 
+// SPECIFICATION : POS_030
 /**
  * 
  * @author

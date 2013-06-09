@@ -5,6 +5,7 @@ package fr.utc.nf33.ins.db;
 
 import android.provider.BaseColumns;
 
+// SPECIFICATION : POS_030
 /**
  * 
  * @author

@@ -23,7 +23,7 @@ import com.google.android.gms.maps.LocationSource;
 
 import fr.utc.nf33.ins.db.InsDbHelper;
 
-
+// SPECIFICATION : POS_010, POS_020
 /**
  * 
  * @author
@@ -84,6 +84,7 @@ public final class CloseBuildingsService extends Service {
         mBestLocation = mLocation;
         publishProgress();
 
+        // SPECIFICATION : TRS_010
         if (mAverageSnr >= LocationHelper.SNR_THRESHOLD) {
           InsDbHelper dbHelper = new InsDbHelper(CloseBuildingsService.this);
 
@@ -203,7 +204,7 @@ public final class CloseBuildingsService extends Service {
     private Location mBestLocation;
     //
     private AsyncTask<Void, Void, List<Building>> mBestLocationTask;
-    //
+    // SPECIFICATION : POS_040, POS_060
     private List<Building> mCloseBuildings;
     //
     private OnLocationChangedListener mListener;
@@ -221,6 +222,7 @@ public final class CloseBuildingsService extends Service {
     @Override
     public final void onLocationChanged(Location location) {
       if (mBestLocationTask != null) return;
+      // SPECIFICATION : POS_050
       mBestLocationTask = new BestLocationTask(location, mBestLocation, mAverageSnr);
       mBestLocationTask.execute();
     }

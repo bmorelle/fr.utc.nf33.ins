@@ -36,6 +36,7 @@ import fr.utc.nf33.ins.location.LocationHelper;
 import fr.utc.nf33.ins.location.LocationIntent;
 import fr.utc.nf33.ins.location.SnrService;
 
+// SPECIFICATION : MOD_010
 /**
  * 
  * @author
@@ -49,6 +50,7 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private static final GoogleMapOptions GOOGLE_MAP_OPTIONS = new GoogleMapOptions();
 
+  // SPECIFICATION : MAP_020, MAP_030, MAP_040
   static {
     GOOGLE_MAP_OPTIONS.compassEnabled(false);
     GOOGLE_MAP_OPTIONS.mapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -73,6 +75,7 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private ServiceConnection mSnrConnection;
 
+  // SPECIFICATION : POS_080
   /**
    * Called when the user clicks the Entry Points button.
    * 
@@ -88,6 +91,7 @@ public final class OutdoorActivity extends FragmentActivity
 
     setContentView(R.layout.activity_outdoor);
 
+    // SPECIFICATION : MAP_010
     // Create a Google Map Fragment with desired options.
     mMapFragment = SupportMapFragment.newInstance(GOOGLE_MAP_OPTIONS);
     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
@@ -133,6 +137,7 @@ public final class OutdoorActivity extends FragmentActivity
   protected final void onStart() {
     super.onStart();
 
+    // SPECIFICATION : MOD_020
     // Check whether the GPS provider is enabled.
     if (!((LocationManager) getSystemService(Context.LOCATION_SERVICE))
         .isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -140,6 +145,7 @@ public final class OutdoorActivity extends FragmentActivity
       dialog.show(getSupportFragmentManager(), GpsDialogFragment.NAME);
     }
 
+    // SPECIFICATION : MAP_050, MAP_060
     // Setup the map.
     GoogleMap map = mMapFragment.getMap();
     map.setMyLocationEnabled(true);
@@ -166,6 +172,7 @@ public final class OutdoorActivity extends FragmentActivity
       public final void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to CloseBuildingsService, cast the IBinder and get LocationService instance.
         mCloseBuildingsService = ((LocalBinder) service).getService();
+        // SPECIFICATION : POS_010
         mMapFragment.getMap().setLocationSource(mCloseBuildingsService.getBestLocationProvider());
       }
 
@@ -179,6 +186,7 @@ public final class OutdoorActivity extends FragmentActivity
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
 
+    // SPECIFICATION : POS_070, POS_090
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
@@ -213,6 +221,7 @@ public final class OutdoorActivity extends FragmentActivity
         ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_snr))
             .setText(String.format("%.02f", snr));
 
+        // SPECIFICATION : TRS_030
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         switch (LocationHelper.shouldGoIndoor(snr, buildings)) {
           case ASK_USER:

@@ -18,6 +18,7 @@ import fr.utc.nf33.ins.location.LocationIntent;
 import fr.utc.nf33.ins.location.SnrService;
 import fr.utc.nf33.ins.location.SnrService.LocalBinder;
 
+// MOD_010
 /**
  * 
  * @author
@@ -65,6 +66,7 @@ public final class IndoorActivity extends Activity {
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
 
+    // SPECIFICATION : TRS_040
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
