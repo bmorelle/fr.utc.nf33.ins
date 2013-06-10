@@ -26,11 +26,13 @@ import fr.utc.nf33.ins.location.SnrService.LocalBinder;
  */
 public final class IndoorActivity extends Activity {
   //
-  private ServiceConnection mSnrConnection;
-  //
   private BroadcastReceiver mNewSnrReceiver;
   //
   private SnrService mSnrService;
+  //
+  private boolean mSnrServiceBound;
+  //
+  private ServiceConnection mSnrServiceConnection;
 
   @Override
   protected final void onCreate(Bundle savedInstanceState) {
@@ -48,20 +50,21 @@ public final class IndoorActivity extends Activity {
 
     // Connect to the SNR Service.
     Intent snrIntent = new Intent(this, SnrService.class);
-    mSnrConnection = new ServiceConnection() {
+    mSnrServiceConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
         mSnrService = ((LocalBinder) service).getService();
         ((TextView) findViewById(R.id.activity_indoor_textview_snr)).setText(String.format("%.02f",
             mSnrService.getAverageSnr()));
+        mSnrServiceBound = true;
       }
 
       @Override
       public final void onServiceDisconnected(ComponentName name) {
-
+        mSnrServiceBound = false;
       }
     };
-    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrServiceConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -91,8 +94,11 @@ public final class IndoorActivity extends Activity {
     mNewSnrReceiver = null;
 
     // Disconnect from the SNR Service.
-    unbindService(mSnrConnection);
-    mSnrConnection = null;
-    mSnrService = null;
+    if (mSnrServiceBound) {
+      unbindService(mSnrServiceConnection);
+      mSnrService = null;
+      mSnrServiceBound = false;
+    }
+    mSnrServiceConnection = null;
   }
 }

@@ -61,9 +61,11 @@ public final class OutdoorActivity extends FragmentActivity
   }
 
   //
-  private ServiceConnection mCloseBuildingsConnection;
-  //
   private CloseBuildingsService mCloseBuildingsService;
+  //
+  private boolean mCloseBuildingsServiceBound;
+  //
+  private ServiceConnection mCloseBuildingsServiceConnection;
   //
   private SupportMapFragment mMapFragment;
   //
@@ -73,7 +75,9 @@ public final class OutdoorActivity extends FragmentActivity
   //
   private BroadcastReceiver mNewSnrReceiver;
   //
-  private ServiceConnection mSnrConnection;
+  private boolean mSnrServiceBound;
+  //
+  private ServiceConnection mSnrServiceConnection;
 
   // SPECIFICATION : POS_080
   /**
@@ -152,36 +156,37 @@ public final class OutdoorActivity extends FragmentActivity
 
     // Connect to the SNR Service.
     Intent snrIntent = new Intent(this, SnrService.class);
-    mSnrConnection = new ServiceConnection() {
+    mSnrServiceConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
-
+        mSnrServiceBound = true;
       }
 
       @Override
       public final void onServiceDisconnected(ComponentName name) {
-
+        mSnrServiceBound = false;
       }
     };
-    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrServiceConnection, Context.BIND_AUTO_CREATE);
 
     // Connect to the Close Buildings Service.
     Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
-    mCloseBuildingsConnection = new ServiceConnection() {
+    mCloseBuildingsServiceConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
         // We've bound to CloseBuildingsService, cast the IBinder and get LocationService instance.
         mCloseBuildingsService = ((LocalBinder) service).getService();
         // SPECIFICATION : POS_010
         mMapFragment.getMap().setLocationSource(mCloseBuildingsService.getBestLocationProvider());
+        mCloseBuildingsServiceBound = true;
       }
 
       @Override
       public final void onServiceDisconnected(ComponentName name) {
-
+        mCloseBuildingsServiceBound = false;
       }
     };
-    bindService(closeBuildingsIntent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
+    bindService(closeBuildingsIntent, mCloseBuildingsServiceConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -190,6 +195,8 @@ public final class OutdoorActivity extends FragmentActivity
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
+        if (!mCloseBuildingsServiceBound) return;
+
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         int numberOfEntryPoints = 0;
@@ -217,6 +224,8 @@ public final class OutdoorActivity extends FragmentActivity
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
+        if (!mCloseBuildingsServiceBound) return;
+
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_snr))
             .setText(String.format("%.02f", snr));
@@ -265,12 +274,18 @@ public final class OutdoorActivity extends FragmentActivity
     mNewSnrReceiver = null;
 
     // Disconnect from the Close Buildings Service.
-    unbindService(mCloseBuildingsConnection);
-    mCloseBuildingsConnection = null;
-    mCloseBuildingsService = null;
+    if (mCloseBuildingsServiceBound) {
+      unbindService(mCloseBuildingsServiceConnection);
+      mCloseBuildingsService = null;
+      mCloseBuildingsServiceBound = false;
+    }
+    mCloseBuildingsServiceConnection = null;
 
     // Disconnect from the SNR Service.
-    unbindService(mSnrConnection);
-    mSnrConnection = null;
+    if (mSnrServiceBound) {
+      unbindService(mSnrServiceConnection);
+      mSnrServiceBound = false;
+    }
+    mSnrServiceConnection = null;
   }
 }

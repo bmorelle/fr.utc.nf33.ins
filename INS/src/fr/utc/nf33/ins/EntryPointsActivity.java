@@ -35,9 +35,6 @@ import fr.utc.nf33.ins.location.SnrService;
  */
 public final class EntryPointsActivity extends ExpandableListActivity {
 
-  public static final String EXTRA_CHOOSE_ENTRY_POINT = "fr.utc.nf33.ins.CHOOSE_ENTRY_POINT";
-  public static final String CHOOSE_MSG = "Please click on the access point you just entered";
-
   /**
    * 
    * @author
@@ -123,20 +120,30 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     }
   }
 
-  //
-  private ServiceConnection mCloseBuildingsConnection;
+  public static final String CHOOSE_MSG = "Please click on the access point you just entered";
+
+  public static final String EXTRA_CHOOSE_ENTRY_POINT = "fr.utc.nf33.ins.CHOOSE_ENTRY_POINT";
+
   //
   private CloseBuildingsService mCloseBuildingsService;
+  //
+  private boolean mCloseBuildingsServiceBound;
+  //
+  private ServiceConnection mCloseBuildingsServiceConnection;
   //
   private BroadcastReceiver mNewCloseBuildingsReceiver;
   //
   private BroadcastReceiver mNewSnrReceiver;
   //
-  private ServiceConnection mSnrConnection;
+  private boolean mSnrServiceBound;
+  //
+  private ServiceConnection mSnrServiceConnection;
 
   @Override
   public final boolean onChildClick(ExpandableListView parent, View v, int groupPosition,
       int childPosition, long id) {
+    if (!mCloseBuildingsServiceBound) return true;
+
     List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
     Intent indoorIntent = new Intent(this, IndoorActivity.class);
     StringBuilder sb = new StringBuilder();
@@ -146,6 +153,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     sb.append(building.getEntryPoints().get(childPosition).getName());
     indoorIntent.putExtra(LocationIntent.NewCloseBuildings.EXTRA_ENTRY_POINT, sb.toString());
     startActivity(indoorIntent);
+
     return true;
   }
 
@@ -172,22 +180,22 @@ public final class EntryPointsActivity extends ExpandableListActivity {
 
     // Connect to the SNR Service.
     Intent snrIntent = new Intent(this, SnrService.class);
-    mSnrConnection = new ServiceConnection() {
+    mSnrServiceConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
-
+        mSnrServiceBound = true;
       }
 
       @Override
       public final void onServiceDisconnected(ComponentName name) {
-
+        mSnrServiceBound = false;
       }
     };
-    bindService(snrIntent, mSnrConnection, Context.BIND_AUTO_CREATE);
+    bindService(snrIntent, mSnrServiceConnection, Context.BIND_AUTO_CREATE);
 
     // Connect to the Close Buildings Service.
     Intent closeBuildingsIntent = new Intent(this, CloseBuildingsService.class);
-    mCloseBuildingsConnection = new ServiceConnection() {
+    mCloseBuildingsServiceConnection = new ServiceConnection() {
       @Override
       public final void onServiceConnected(ComponentName name, IBinder service) {
         mCloseBuildingsService = ((LocalBinder) service).getService();
@@ -195,14 +203,16 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         setListAdapter(new ExpandableListViewAdapter(buildings));
+
+        mCloseBuildingsServiceBound = true;
       }
 
       @Override
       public final void onServiceDisconnected(ComponentName name) {
-
+        mCloseBuildingsServiceBound = false;
       }
     };
-    bindService(closeBuildingsIntent, mCloseBuildingsConnection, Context.BIND_AUTO_CREATE);
+    bindService(closeBuildingsIntent, mCloseBuildingsServiceConnection, Context.BIND_AUTO_CREATE);
 
     // Register receivers.
     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -210,6 +220,8 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     mNewCloseBuildingsReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
+        if (!mCloseBuildingsServiceBound) return;
+
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         if (buildings == null) return;
         setListAdapter(new ExpandableListViewAdapter(buildings));
@@ -221,6 +233,8 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     mNewSnrReceiver = new BroadcastReceiver() {
       @Override
       public final void onReceive(Context context, Intent intent) {
+        if (!mCloseBuildingsServiceBound) return;
+
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
         switch (LocationHelper.shouldGoIndoor(snr, buildings)) {
@@ -259,12 +273,18 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     mNewSnrReceiver = null;
 
     // Disconnect from the Close Buildings Service.
-    unbindService(mCloseBuildingsConnection);
-    mCloseBuildingsConnection = null;
-    mCloseBuildingsService = null;
+    if (mCloseBuildingsServiceBound) {
+      unbindService(mCloseBuildingsServiceConnection);
+      mCloseBuildingsService = null;
+      mCloseBuildingsServiceBound = false;
+    }
+    mCloseBuildingsServiceConnection = null;
 
     // Disconnect from the SNR Service.
-    unbindService(mSnrConnection);
-    mSnrConnection = null;
+    if (mSnrServiceBound) {
+      unbindService(mSnrServiceConnection);
+      mSnrServiceBound = false;
+    }
+    mSnrServiceConnection = null;
   }
 }
