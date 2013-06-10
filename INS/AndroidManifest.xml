@@ -44,6 +44,7 @@
         <activity
             android:name="fr.utc.nf33.ins.IndoorActivity"
             android:label="@string/activity_indoor_title"
+            android:launchMode="singleTask"
             android:noHistory="true"
             android:parentActivityName="fr.utc.nf33.ins.OutdoorActivity"
             android:screenOrientation="portrait" >
