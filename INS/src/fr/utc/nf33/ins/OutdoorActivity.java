@@ -236,7 +236,7 @@ public final class OutdoorActivity extends FragmentActivity
           case ASK_USER:
             Intent epIntent = new Intent(OutdoorActivity.this, EntryPointsActivity.class);
             epIntent.putExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT,
-                EntryPointsActivity.CHOOSE_MSG);
+                R.string.entry_point_choose);
             startActivity(epIntent);
             break;
           case NO:

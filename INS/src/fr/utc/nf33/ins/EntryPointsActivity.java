@@ -120,8 +120,6 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     }
   }
 
-  public static final String CHOOSE_MSG = "Please click on the access point you just entered";
-
   public static final String EXTRA_CHOOSE_ENTRY_POINT = "fr.utc.nf33.ins.CHOOSE_ENTRY_POINT";
 
   //
@@ -166,8 +164,7 @@ public final class EntryPointsActivity extends ExpandableListActivity {
     String msg = getIntent().getStringExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT);
 
     if (msg != null) {
-      ((TextView) findViewById(R.id.activity_entry_points_textview_choose)).setText(msg + "\n"
-          + "\n");
+      ((TextView) findViewById(R.id.activity_entry_points_textview_choose)).setText(msg + "\n\n");
     }
 
     // Remove the Group Indicator.
