@@ -8,8 +8,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
+import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 
@@ -79,7 +82,24 @@ public final class SnrService extends Service {
   }
 
   //
+  private class SimpleLocationListener implements LocationListener {
+    @Override
+    public void onLocationChanged(Location arg0) {}
+
+    @Override
+    public void onProviderDisabled(String provider) {}
+
+    @Override
+    public void onProviderEnabled(String provider) {}
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
+  }
+
+  //
   private GpsStatusListener mGpsStatusListener;
+  //
+  private SimpleLocationListener mSimpleLocationListener;
 
   /**
    * 
@@ -99,16 +119,20 @@ public final class SnrService extends Service {
   @Override
   public final void onCreate() {
     mGpsStatusListener = new GpsStatusListener();
+    mSimpleLocationListener = new SimpleLocationListener();
   }
 
   @Override
   public final void onDestroy() {
     mGpsStatusListener = null;
+    mSimpleLocationListener = null;
   }
 
   @Override
   public final void onRebind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
+      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0F, mSimpleLocationListener);
     lm.addGpsStatusListener(mGpsStatusListener);
   }
 
@@ -116,6 +140,7 @@ public final class SnrService extends Service {
   public final boolean onUnbind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     lm.removeGpsStatusListener(mGpsStatusListener);
+    lm.removeUpdates(mSimpleLocationListener);
 
     return true;
   }
