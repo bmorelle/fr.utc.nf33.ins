@@ -12,9 +12,11 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 
 /**
@@ -41,9 +43,11 @@ public final class SnrService extends Service {
 
     @Override
     public final void onGpsStatusChanged(int event) {
+      Log.d("event GPS", Integer.toString(event));
       if (event == GpsStatus.GPS_EVENT_FIRST_FIX) mFirstFix = true;
 
-      if (mFirstFix && (event == GpsStatus.GPS_EVENT_STOPPED)) {
+      if ((mFirstFix && (event == GpsStatus.GPS_EVENT_STOPPED))
+          || ((Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1) && (event == GpsStatus.GPS_EVENT_SATELLITE_STATUS))) {
         float[] snrArr = new float[SATELLITES_COUNT];
 
         LocationManager lm =
