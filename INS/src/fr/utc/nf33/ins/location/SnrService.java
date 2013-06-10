@@ -132,7 +132,9 @@ public final class SnrService extends Service {
   public final void onRebind(Intent intent) {
     LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
     if (lm.getProvider(LocationManager.GPS_PROVIDER) != null)
-      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0F, mSimpleLocationListener);
+      lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+          CloseBuildingsService.BestLocationProvider.GPS_MIN_TIME,
+          CloseBuildingsService.BestLocationProvider.GPS_MIN_DISTANCE, mSimpleLocationListener);
     lm.addGpsStatusListener(mGpsStatusListener);
   }
 
