@@ -103,6 +103,8 @@ public final class EntryPointsActivity extends ExpandableListActivity {
         ViewGroup parent) {
       if (convertView == null)
         convertView = mInflater.inflate(R.layout.entry_points_list_group, null);
+      ExpandableListView elv = (ExpandableListView) parent;
+      elv.expandGroup(groupPosition);
       Building building = getGroup(groupPosition);
       ((TextView) convertView.findViewById(R.id.entry_points_list_group_text)).setText(building
           .getName());
