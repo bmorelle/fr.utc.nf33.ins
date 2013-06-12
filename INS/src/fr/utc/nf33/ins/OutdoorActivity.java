@@ -21,7 +21,6 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -227,8 +226,6 @@ public final class OutdoorActivity extends FragmentActivity
         if (!mCloseBuildingsServiceBound) return;
 
         float snr = intent.getFloatExtra(LocationIntent.NewSnr.EXTRA_SNR, 0);
-        ((TextView) OutdoorActivity.this.findViewById(R.id.activity_outdoor_button_snr))
-            .setText(String.format("%.02f", snr));
 
         // SPECIFICATION : TRS_030
         List<Building> buildings = mCloseBuildingsService.getCloseBuildings();
