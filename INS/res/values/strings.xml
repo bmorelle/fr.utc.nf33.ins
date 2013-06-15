@@ -13,6 +13,6 @@
     <string name="entry_points_textview_level_text">Level</string>
     <string name="entry_points_textview_lat_text">Latitude</string>
     <string name="entry_points_textview_lon_text">Longitude</string>
-    <string name="entry_point_choose">Please click on the access point you just entered</string>
+    <string name="entry_points_choose">Please click on the access point you just entered</string>
 
 </resources>
