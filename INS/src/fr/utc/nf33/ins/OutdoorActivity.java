@@ -18,6 +18,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -234,6 +235,7 @@ public final class OutdoorActivity extends FragmentActivity
             Intent epIntent = new Intent(OutdoorActivity.this, EntryPointsActivity.class);
             epIntent.putExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT,
                 R.string.entry_points_choose);
+            Log.d("STRING ENTRY_POINT", epIntent.toString());
             startActivity(epIntent);
             break;
           case NO:

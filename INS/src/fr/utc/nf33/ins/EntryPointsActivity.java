@@ -163,7 +163,12 @@ public final class EntryPointsActivity extends ExpandableListActivity {
 
     setContentView(R.layout.activity_entry_points);
 
-    String msg = getIntent().getStringExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT);
+    int id = getIntent().getIntExtra(EntryPointsActivity.EXTRA_CHOOSE_ENTRY_POINT, 0);
+    String msg = null;
+
+    if (id != 0) {
+      msg = this.getString(id);
+    }
 
     if (msg != null) {
       ((TextView) findViewById(R.id.activity_entry_points_textview_choose)).setText(msg + "\n\n");
