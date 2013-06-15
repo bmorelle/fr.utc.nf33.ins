@@ -23,7 +23,8 @@ public final class LocationHelper {
    */
   public enum DistancesApproximator {
     /**
-     * 
+     * LatitudeDifference et LongitudeDifference obtenues grâce à la formule :
+     * http://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane
      */
     PLANAR {
       @Override
