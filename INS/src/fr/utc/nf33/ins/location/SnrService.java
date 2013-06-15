@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 
 /**
@@ -43,7 +42,6 @@ public final class SnrService extends Service {
 
     @Override
     public final void onGpsStatusChanged(int event) {
-      Log.d("event GPS", Integer.toString(event));
       if (event == GpsStatus.GPS_EVENT_FIRST_FIX) mFirstFix = true;
 
       if ((mFirstFix && (event == GpsStatus.GPS_EVENT_STOPPED))
